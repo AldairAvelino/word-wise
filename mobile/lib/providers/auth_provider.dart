@@ -38,11 +38,16 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> signUp({required String email, required String password}) async {
+  Future<void> signUp({
+    required String email, 
+    required String password,
+    required String username,
+  }) async {
     try {
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
+        data: {'username': username},
       );
       _user = response.user;
       notifyListeners();
