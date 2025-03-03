@@ -3,6 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:mobile/providers/auth_provider.dart';
 import 'package:mobile/screens/auth/get_started_screen.dart';
 import 'package:mobile/screens/word_details_screen.dart';
+import 'package:mobile/screens/games/word_match_screen.dart';
+import 'package:mobile/screens/games/fill_blanks_screen.dart';
+import 'package:mobile/screens/games/flashcards_screen.dart';
+import 'package:mobile/screens/games/word_duel_screen.dart';
+import 'package:mobile/screens/settings_screen.dart';
+import 'package:mobile/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,256 +46,270 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // App Bar with Search
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 12),
-                            child: Icon(
-                              Icons.search,
-                              color: Colors.grey,
-                              size: 24,
-                            ),
+    final List<Widget> _screens = [
+      Column(
+        children: [
+          // App Bar with Search
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(left: 12),
+                          child: Icon(
+                            Icons.search,
+                            color: Colors.grey,
+                            size: 24,
                           ),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              textAlign: TextAlign.start,
-                              decoration: const InputDecoration(
-                                hintText: 'Search words...',
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            textAlign: TextAlign.start,
+                            decoration: const InputDecoration(
+                              hintText: 'Search words...',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                              hintStyle: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
                               ),
                             ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Daily Word Card
+                  GestureDetector(
+                    onTap: () => _navigateToWordDetails(context, 'Serendipity'),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.blue[600]!, Colors.blue[400]!],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Word of the Day',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'NEW',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Serendipity',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '/ˌserənˈdipədē/',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'The occurrence and development of events by chance in a happy or beneficial way.',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Flexible(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _buildActionButton(
+                                        icon: Icons.volume_up,
+                                        label: 'Listen',
+                                        onTap: () {},
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildActionButton(
+                                        icon: Icons.favorite_border,
+                                        label: 'Like',
+                                        onTap: () {},
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildActionButton(
+                                        icon: Icons.bookmark_border,
+                                        label: 'Save',
+                                        onTap: () {},
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildActionButton(
+                                        icon: Icons.share,
+                                        label: 'Share',
+                                        onTap: () {},
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(Icons.logout),
-                    onPressed: () => _signOut(context),
+                  const SizedBox(height: 24),
+                  // Recently Viewed Section
+                  const Text(
+                    'Recently Viewed',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 120,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) {
+                        return _buildRecentWordCard(
+                          'Ephemeral',
+                          'Lasting for a very short time',
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Practice Section
+                  const Text(
+                    'Practice & Games',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.2,
+                    children: [
+                      _buildPracticeCard(
+                        title: 'Word Match',
+                        description: 'Match words with their meanings',
+                        icon: Icons.extension,
+                        color: Colors.orange,
+                        onTap: () {},
+                      ),
+                      _buildPracticeCard(
+                        title: 'Fill Blanks',
+                        description: 'Complete sentences with correct words',
+                        icon: Icons.edit_note,
+                        color: Colors.purple,
+                        onTap: () {},
+                      ),
+                      _buildPracticeCard(
+                        title: 'Flashcards',
+                        description: 'Review words with flashcards',
+                        icon: Icons.style,
+                        color: Colors.green,
+                        onTap: () {},
+                      ),
+                      _buildPracticeCard(
+                        title: 'Word Duel',
+                        description: 'Challenge friends in word battles',
+                        icon: Icons.people,
+                        color: Colors.blue,
+                        onTap: () {},
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Daily Word Card
-                    GestureDetector(
-                      onTap: () => _navigateToWordDetails(context, 'Serendipity'),
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.blue[600]!, Colors.blue[400]!],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Word of the Day',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Text(
-                                    'NEW',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Serendipity',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              '/ˌserənˈdipədē/',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'The occurrence and development of events by chance in a happy or beneficial way.',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Flexible(
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: Row(
-                                      children: [
-                                        _buildActionButton(
-                                          icon: Icons.volume_up,
-                                          label: 'Listen',
-                                          onTap: () {},
-                                        ),
-                                        const SizedBox(width: 12),
-                                        _buildActionButton(
-                                          icon: Icons.favorite_border,
-                                          label: 'Like',
-                                          onTap: () {},
-                                        ),
-                                        const SizedBox(width: 12),
-                                        _buildActionButton(
-                                          icon: Icons.bookmark_border,
-                                          label: 'Save',
-                                          onTap: () {},
-                                        ),
-                                        const SizedBox(width: 12),
-                                        _buildActionButton(
-                                          icon: Icons.share,
-                                          label: 'Share',
-                                          onTap: () {},
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Recently Viewed Section
-                    const Text(
-                      'Recently Viewed',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 120,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: 5,
-                        itemBuilder: (context, index) {
-                          return _buildRecentWordCard(
-                            'Ephemeral',
-                            'Lasting for a very short time',
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Practice Section
-                    const Text(
-                      'Practice & Games',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.2,
-                      children: [
-                        _buildPracticeCard(
-                          title: 'Word Match',
-                          description: 'Match words with their meanings',
-                          icon: Icons.extension,
-                          color: Colors.orange,
-                          onTap: () {},
-                        ),
-                        _buildPracticeCard(
-                          title: 'Fill Blanks',
-                          description: 'Complete sentences with correct words',
-                          icon: Icons.edit_note,
-                          color: Colors.purple,
-                          onTap: () {},
-                        ),
-                        _buildPracticeCard(
-                          title: 'Flashcards',
-                          description: 'Review words with flashcards',
-                          icon: Icons.style,
-                          color: Colors.green,
-                          onTap: () {},
-                        ),
-                        _buildPracticeCard(
-                          title: 'Word Duel',
-                          description: 'Challenge friends in word battles',
-                          icon: Icons.people,
-                          color: Colors.blue,
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
+      const Center(child: Text('Search')), // TODO: Implement search screen
+      const Center(child: Text('Saved')), // TODO: Implement saved words screen
+      const ProfileScreen(),
+    ];
+
+    return Scaffold(
+      body: SafeArea(
+        child: _screens[_currentIndex],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -358,7 +378,42 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        switch (title) {
+          case 'Word Match':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const WordMatchScreen(),
+              ),
+            );
+            break;
+          case 'Fill Blanks':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const FillBlanksScreen(),
+              ),
+            );
+            break;
+          case 'Flashcards':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const FlashcardsScreen(),
+              ),
+            );
+            break;
+          case 'Word Duel':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const WordDuelScreen(),
+              ),
+            );
+            break;
+        }
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

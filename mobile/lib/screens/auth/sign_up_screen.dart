@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:mobile/providers/auth_provider.dart';
 import 'package:mobile/screens/home_screen.dart';
 import 'package:mobile/widgets/custom_text_field.dart';
+import 'package:mobile/screens/auth/sign_in_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -39,13 +40,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
 
       if (!mounted) return;
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully! Please sign in.'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Add a small delay to allow the user to read the message
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Navigate to sign in screen and remove the sign up screen from stack
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const SignInScreen()),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -199,4 +218,4 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
-} 
+}

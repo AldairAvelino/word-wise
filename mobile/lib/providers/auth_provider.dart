@@ -1,37 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final _supabase = Supabase.instance.client;
-  User? _user;
+  final _authService = AuthService();
+  Map<String, dynamic>? _user;
+  String? _token;
   bool _loading = true;
 
   AuthProvider() {
     _init();
   }
 
-  User? get user => _user;
+  Map<String, dynamic>? get user => _user;
+  String? get token => _token;
   bool get loading => _loading;
-  bool get isAuthenticated => _user != null;
+  bool get isAuthenticated => _user != null && _token != null;
 
   Future<void> _init() async {
-    _user = _supabase.auth.currentUser;
+    // Initialize by checking stored token and user data
     _loading = false;
     notifyListeners();
-
-    _supabase.auth.onAuthStateChange.listen((event) {
-      _user = event.session?.user;
-      notifyListeners();
-    });
   }
 
   Future<void> signIn({required String email, required String password}) async {
     try {
-      final response = await _supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-      _user = response.user;
+      final response = await _authService.signIn(email, password);
+      _token = response['session']['access_token'];
+      _user = response['user'];
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -44,12 +39,10 @@ class AuthProvider extends ChangeNotifier {
     required String username,
   }) async {
     try {
-      final response = await _supabase.auth.signUp(
-        email: email,
-        password: password,
-        data: {'username': username},
-      );
-      _user = response.user;
+      final response = await _authService.signUp(email, password, username);
+      // Store only the user data from the response
+      _user = response['user'];
+      // Don't set the token since it's not provided in signup
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -57,18 +50,19 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _supabase.auth.signOut();
-    _user = null;
-    notifyListeners();
+    try {
+      if (_token != null) {
+        await _authService.signOut(_token!);
+      }
+      _user = null;
+      _token = null;
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> resetPassword(String email) async {
-    await _supabase.auth.resetPasswordForEmail(email);
+    await _authService.resetPassword(email);
   }
-
-  Future<void> updatePassword(String newPassword) async {
-    await _supabase.auth.updateUser(
-      UserAttributes(password: newPassword),
-    );
-  }
-} 
+}

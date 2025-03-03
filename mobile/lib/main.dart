@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile/providers/auth_provider.dart';
 import 'package:mobile/providers/onboarding_provider.dart';
 import 'package:mobile/screens/splash_screen.dart';
 import 'package:mobile/screens/onboarding/onboarding_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile/services/auth_service.dart';
+import 'package:mobile/blocs/auth_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
   
-  await Supabase.initialize(
-    url: const String.fromEnvironment('SUPABASE_URL'),
-    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AuthBloc(
+            AuthService(),
+            prefs,
+          ),
+        ),
+      ],
+      child: const MyApp(),
+    ),
   );
-  
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -69,4 +80,4 @@ class InitialScreen extends StatelessWidget {
       },
     );
   }
-} 
+}
