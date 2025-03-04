@@ -14,11 +14,16 @@ class AuthService {
         'username': username,
       }),
     );
-
+    
+    final responseData = json.decode(response.body);
+    
     if (response.statusCode == 201) {
-      return json.decode(response.body);
+      return {
+        'message': responseData['message'], // Include success message
+        'user': responseData['user']
+      };
     } else {
-      throw Exception(json.decode(response.body)['error'] ?? 'Failed to create account');
+      throw Exception(responseData['error'] ?? responseData['message'] ?? 'Failed to create account');
     }
   }
 

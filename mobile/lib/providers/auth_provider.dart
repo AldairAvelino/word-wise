@@ -32,8 +32,7 @@ class AuthProvider extends ChangeNotifier {
       rethrow;
     }
   }
-
-  Future<void> signUp({
+  Future<Map<String, dynamic>> signUp({
     required String email, 
     required String password,
     required String username,
@@ -42,13 +41,12 @@ class AuthProvider extends ChangeNotifier {
       final response = await _authService.signUp(email, password, username);
       // Store only the user data from the response
       _user = response['user'];
-      // Don't set the token since it's not provided in signup
       notifyListeners();
+      return response; // Return the response
     } catch (e) {
       rethrow;
     }
   }
-
   Future<void> signOut() async {
     try {
       if (_token != null) {

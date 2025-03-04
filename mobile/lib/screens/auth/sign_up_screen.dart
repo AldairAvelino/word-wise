@@ -33,7 +33,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await context.read<AuthProvider>().signUp(
+      final response = await context.read<AuthProvider>().signUp(
             email: _emailController.text.trim(),
             password: _passwordController.text,
             username: _usernameController.text.trim(),
@@ -43,17 +43,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
       
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully! Please sign in.'),
+        SnackBar(
+          content: Text(response['message'] ?? 'Account created successfully!'),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
 
-      // Add a small delay to allow the user to read the message
-      await Future.delayed(const Duration(seconds: 2));
+      // Wait for snackbar to be visible
+      await Future.delayed(const Duration(seconds: 3));
 
-      // Navigate to sign in screen and remove the sign up screen from stack
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const SignInScreen()),
@@ -64,6 +68,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         SnackBar(
           content: Text(e.toString()),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } finally {
