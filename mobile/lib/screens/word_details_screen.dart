@@ -4,15 +4,15 @@ import '../models/daily_word.dart';
 
 class WordDetailsScreen extends StatefulWidget {
   final DailyWord dailyWord;
-  const WordDetailsScreen({
-    Key? key,
-    required this.dailyWord,
-  }) : super(key: key);
+  const WordDetailsScreen({Key? key, required this.dailyWord}) : super(key: key);
   @override
   State<WordDetailsScreen> createState() => _WordDetailsScreenState();
 }
+
 class _WordDetailsScreenState extends State<WordDetailsScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isMastered = false;  // Add this line
+  
   Future<void> _playAudio(String url) async {
     try {
       await _audioPlayer.setUrl(url);
@@ -21,174 +21,233 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
       // Handle error
     }
   }
+  
   @override
   void dispose() {
     _audioPlayer.dispose();
     super.dispose();
   }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.blue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.black),
+            icon: const Icon(Icons.favorite_border, color: Colors.white),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.bookmark_border, color: Colors.black),
+            icon: const Icon(Icons.bookmark_border, color: Colors.white),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.share, color: Colors.black),
+            icon: const Icon(Icons.share, color: Colors.white),
             onPressed: () {},
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.dailyWord.word,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue[600]!, Colors.blue[400]!],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  widget.dailyWord.data.phonetic,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                IconButton(
-                  icon: const Icon(Icons.volume_up),
-                  onPressed: () => _playAudio(widget.dailyWord.data.audioUrl),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            ...widget.dailyWord.data.meanings.map((meaning) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[100],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    meaning.partOfSpeech,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.dailyWord.word,
                     style: const TextStyle(
-                      color: Colors.blue,
+                      color: Colors.white,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ...meaning.definitions.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final definition = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${index + 1}. ${definition.definition}',
-                          style: const TextStyle(fontSize: 16, height: 1.5),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        widget.dailyWord.data.phonetic,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
                         ),
-                        if (definition.example != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            '"${definition.example}"',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                              fontStyle: FontStyle.italic,
-                            ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.volume_up, color: Colors.white),
+                        onPressed: () => _playAudio(widget.dailyWord.data.audioUrl),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _isMastered = !_isMastered;
+                      });
+                    },
+                    icon: Icon(
+                      Icons.check_circle_outline,
+                      color: _isMastered ? Colors.white : Colors.grey[700],
+                    ),
+                    label: Text(
+                      'Mark as Mastered',
+                      style: TextStyle(
+                        color: _isMastered ? Colors.white : Colors.grey[700],
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: _isMastered ? Colors.green : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      side: BorderSide(
+                        color: _isMastered ? Colors.green : Colors.grey[400]!,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Definitions',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ...widget.dailyWord.data.meanings.expand((meaning) {
+                    return [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          meaning.partOfSpeech,
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...meaning.definitions.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final definition = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${index + 1}. ${definition.definition}',
+                                style: const TextStyle(fontSize: 16, height: 1.5),
+                              ),
+                              if (definition.example != null) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.format_quote, color: Colors.blue),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          definition.example!,
+                                          style: TextStyle(
+                                            color: Colors.grey[800],
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ];
+                  }).toList(),
+                  if (widget.dailyWord.data.synonyms.isNotEmpty ||
+                      widget.dailyWord.data.antonyms.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Synonyms & Antonyms',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ...widget.dailyWord.data.synonyms.map((synonym) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            synonym,
+                            style: TextStyle(color: Colors.blue[700]),
+                          ),
+                        )),
+                        ...widget.dailyWord.data.antonyms.map((antonym) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red[50],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            antonym,
+                            style: TextStyle(color: Colors.red[700]),
+                          ),
+                        )),
                       ],
                     ),
-                  );
-                }).toList(),
-              ],
-            )).toList(),
-            if (widget.dailyWord.data.synonyms.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              const Text(
-                'Synonyms',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: widget.dailyWord.data.synonyms.map((synonym) => Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    synonym,
-                    style: const TextStyle(color: Colors.blue),
-                  ),
-                )).toList(),
-              ),
-            ],
-            if (widget.dailyWord.data.antonyms.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              const Text(
-                'Antonyms',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: widget.dailyWord.data.antonyms.map((antonym) => Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    antonym,
-                    style: TextStyle(color: Colors.red[400]),
-                  ),
-                )).toList(),
-              ),
-            ],
+            ),
           ],
         ),
       ),
