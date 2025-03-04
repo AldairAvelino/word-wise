@@ -26,7 +26,7 @@ class FillBlanksProvider with ChangeNotifier {
     _words = _vocabularyService.getWordPairs(difficulty);
     _currentIndex = 0;
     _score = 0;
-    _hints = 7;
+    _hints = 3;
     _isPlaying = true;
     _generateSentence();
     notifyListeners();
