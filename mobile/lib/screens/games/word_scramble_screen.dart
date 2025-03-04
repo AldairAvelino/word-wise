@@ -107,85 +107,68 @@ class _WordScrambleScreenState extends BaseGameScreenState<WordScrambleScreen> {
           return _buildStartGame();
         }
 
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      Text(
-                        provider.scrambledWord,
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 4,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      TextField(
-                        controller: _answerController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your answer',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          provider.checkAnswer(_answerController.text);
-                          _answerController.clear();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: widget.color,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Submit',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              if (provider.showHint)
+        return SingleChildScrollView(  // Add this wrapper
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        const Text(
-                          'Hint:',
-                          style: TextStyle(
-                            fontSize: 18,
+                        Text(
+                          provider.scrambledWord,
+                          style: const TextStyle(
+                            fontSize: 32,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 4,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          provider.currentDefinition,
-                          style: const TextStyle(fontSize: 16),
-                          textAlign: TextAlign.center,
+                        const SizedBox(height: 24),
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).viewInsets.bottom,
+                          ),
+                          child: TextField(
+                            controller: _answerController,
+                            decoration: InputDecoration(
+                              hintText: 'Enter your answer',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            provider.checkAnswer(_answerController.text);
+                            _answerController.clear();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.color,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Submit',
+                            style: TextStyle(fontSize: 18),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         );
       },
