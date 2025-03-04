@@ -9,6 +9,7 @@ import 'package:mobile/screens/games/flashcards_screen.dart';
 import 'package:mobile/screens/games/word_duel_screen.dart';
 import 'package:mobile/screens/settings_screen.dart';
 import 'package:mobile/screens/profile_screen.dart';
+import 'games/word_scramble_screen.dart';  // Add this import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -281,11 +282,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () {},
                       ),
                       _buildPracticeCard(
-                        title: 'Flashcards',
-                        description: 'Review words with flashcards',
-                        icon: Icons.style,
-                        color: Colors.green,
-                        onTap: () {},
+                        title: 'Word Scramble',  // Changed from 'Flashcards'
+                        description: 'Unscramble words to test your vocabulary',  // Updated description
+                        icon: Icons.shuffle,  // Changed icon to better represent scramble
+                        color: Colors.blue,  // Changed color to match the new game
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const WordScrambleScreen(),  // Updated screen
+                            ),
+                          );
+                        },
                       ),
                       _buildPracticeCard(
                         title: 'Word Duel',
@@ -396,11 +404,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
             break;
-          case 'Flashcards':
+          case 'Word Scramble':  // Add this case
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const FlashcardsScreen(),
+                builder: (context) => const WordScrambleScreen(),
               ),
             );
             break;
@@ -518,4 +526,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-} 
+}

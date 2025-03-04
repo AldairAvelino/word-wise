@@ -9,24 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/services/auth_service.dart';
 import 'package:mobile/blocs/auth_bloc.dart';
 import 'providers/word_match_provider.dart';
+import 'services/vocabulary_service.dart';
+import 'providers/flashcard_provider.dart';
+import 'providers/word_scramble_provider.dart';  // Add this import
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  
-  runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => AuthBloc(
-            AuthService(),
-            prefs,
-          ),
-        ),
-      ],
-      child: const MyApp(),
-    ),
-  );
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -36,10 +24,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider(
+          create: (context) => VocabularyService(),
+        ),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
         ChangeNotifierProvider(create: (_) => WordMatchProvider()),
-        ChangeNotifierProvider(create: (_) => WordMatchProvider()),
+        ChangeNotifierProvider(
+          create: (context) => WordScrambleProvider(
+            context.read<VocabularyService>(),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'WordWise',
