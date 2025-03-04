@@ -44,9 +44,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response['message'] ?? 'Account created successfully!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(response['message'] ?? 'Account created successfully!'),
+              const SizedBox(height: 4),
+              const Text(
+                'Please check your email for the verification link',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
           backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 5), // Increased duration to read both messages
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
@@ -56,8 +67,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       // Wait for snackbar to be visible
-      await Future.delayed(const Duration(seconds: 3));
-
+      await Future.delayed(const Duration(seconds: 5)); // Increased delay to match duration
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const SignInScreen()),
