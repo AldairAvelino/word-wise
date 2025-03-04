@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return GestureDetector(
-      onTap: () => _navigateToWordDetails(context, _dailyWord!.word),
+      onTap: () => _navigateToWordDetails(context, _dailyWord),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -561,29 +561,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Add navigation to word details with animation
   void _navigateToWordDetails(BuildContext context, dynamic wordData) {
-      String word = wordData is DailyWord ? wordData.word : wordData as String;
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => WordDetailsScreen(
-            word: word,
+      if (wordData is DailyWord) {
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => WordDetailsScreen(
+              dailyWord: wordData,
+            ),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(0.0, 1.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOutCubic;
+              var tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              var offsetAnimation = animation.drive(tween);
+              return SlideTransition(
+                position: offsetAnimation,
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 500),
           ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            const begin = Offset(0.0, 1.0);
-            const end = Offset.zero;
-            const curve = Curves.easeInOutCubic;
-            var tween = Tween(begin: begin, end: end).chain(
-              CurveTween(curve: curve),
-            );
-            var offsetAnimation = animation.drive(tween);
-            return SlideTransition(
-              position: offsetAnimation,
-              child: child,
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 500),
-        ),
-      );
+        );
+      } else {
+        // For now, we'll just show a snackbar for non-DailyWord cases
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This feature is not yet implemented'),
+          ),
+        );
+      }
     }
 
   // Add navigation to recently viewed word
