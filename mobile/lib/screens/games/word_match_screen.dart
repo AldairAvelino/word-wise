@@ -97,7 +97,9 @@ class _WordMatchScreenState extends BaseGameScreenState<WordMatchScreen> {
     return Consumer<WordMatchProvider>(
       builder: (context, provider, child) {
         if (provider.isGameOver) {
-          return _buildGameOverScreen(provider);
+          // Check if all pairs are matched
+          final allMatched = provider.wordPairs.every((pair) => pair['isMatched'] == 'true');
+          return allMatched ? _buildWinnerScreen(provider) : _buildGameOverScreen(provider);
         }
         if (!provider.isPlaying) {
           return _buildStartGame();
@@ -408,6 +410,86 @@ class _WordMatchScreenState extends BaseGameScreenState<WordMatchScreen> {
           ),
         ),
         child: Text(difficulty),
+      ),
+    );
+  }
+  Widget _buildWinnerScreen(WordMatchProvider provider) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.emoji_events,
+              size: 64,
+              color: Colors.amber,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Congratulations!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Score: ${provider.finalScore}',
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    provider.resetGame();
+                  },
+                  icon: const Icon(Icons.replay),
+                  label: const Text('Play Again'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.exit_to_app),
+                  label: const Text('Exit'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
