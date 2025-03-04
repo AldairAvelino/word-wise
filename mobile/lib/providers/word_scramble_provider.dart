@@ -80,26 +80,27 @@ class WordScrambleProvider with ChangeNotifier {
     _timer?.cancel();
     notifyListeners();
     
-    // Navigate to result screen
-    if (_score >= 50) {  // You can adjust this winning condition
-      navigateToResult(true);
-    } else {
-      navigateToResult(false);
-    }
+    // Add a small delay to ensure the UI updates before showing the result screen
+    Future.delayed(const Duration(milliseconds: 500), () {
+      navigateToResult(_score >= 50);
+    });
   }
   
   void navigateToResult(bool isWinner) {
-    Navigator.of(_context).pushReplacement(
+    if (!_context.mounted) return;  // Add this check
+    
+    Navigator.pushReplacement(
+      _context,
       MaterialPageRoute(
         builder: (context) => GameResultScreen(
           score: _score,
           isWinner: isWinner,
           onPlayAgain: () {
-            Navigator.of(context).pop();
-            startGame('Easy');  // Or keep track of the last difficulty
+            Navigator.pop(context);
+            startGame('Easy');
           },
           onHome: () {
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.popUntil(context, (route) => route.isFirst);
           },
         ),
       ),

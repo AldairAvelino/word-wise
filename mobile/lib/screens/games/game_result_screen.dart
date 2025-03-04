@@ -33,13 +33,13 @@ class GameResultScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  isWinner ? Icons.emoji_events : Icons.sentiment_dissatisfied,
+                  isWinner ? Icons.emoji_events : Icons.timer_off,
                   size: 100,
                   color: Colors.white,
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  isWinner ? 'Congratulations!' : 'Game Over',
+                  isWinner ? 'Congratulations!' : 'Time\'s Up!',
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -48,7 +48,7 @@ class GameResultScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Your Score: $score',
+                  'Final Score: $score',
                   style: const TextStyle(
                     fontSize: 24,
                     color: Colors.white,
