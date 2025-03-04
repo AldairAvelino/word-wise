@@ -87,14 +87,16 @@ class WordScrambleProvider with ChangeNotifier {
   }
   
   void navigateToResult(bool isWinner) {
-    if (!_context.mounted) return;  // Add this check
-    
+    if (!_context.mounted) return;
     Navigator.pushReplacement(
       _context,
       MaterialPageRoute(
         builder: (context) => GameResultScreen(
           score: _score,
           isWinner: isWinner,
+          message: isWinner 
+              ? 'Congratulations! You unscrambled $_score words!'
+              : 'Game Over! Keep practicing to improve your skills.',
           onPlayAgain: () {
             Navigator.pop(context);
             startGame('Easy');

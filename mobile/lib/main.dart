@@ -12,6 +12,7 @@ import 'providers/word_match_provider.dart';
 import 'services/vocabulary_service.dart';
 import 'providers/flashcard_provider.dart';
 import 'providers/word_scramble_provider.dart';  // Add this import
+import 'providers/fill_blanks_provider.dart';  // Add this import
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +34,13 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => WordScrambleProvider(
             context.read<VocabularyService>(),
-            context,  // Add the BuildContext parameter
+            context,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => FillBlanksProvider(
+            context.read<VocabularyService>(),
+            context,
           ),
         ),
       ],

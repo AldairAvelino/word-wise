@@ -10,6 +10,7 @@ import 'package:mobile/screens/games/word_duel_screen.dart';
 import 'package:mobile/screens/settings_screen.dart';
 import 'package:mobile/screens/profile_screen.dart';
 import 'games/word_scramble_screen.dart';  // Add this import
+import 'games/fill_blanks_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -279,7 +280,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         description: 'Complete sentences with correct words',
                         icon: Icons.edit_note,
                         color: Colors.purple,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FillBlanksScreen(),
+                            ),
+                          );
+                        },
                       ),
                       _buildPracticeCard(
                         title: 'Word Scramble',  // Changed from 'Flashcards'
