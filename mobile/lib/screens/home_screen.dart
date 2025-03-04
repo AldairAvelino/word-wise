@@ -9,8 +9,10 @@ import 'package:mobile/screens/games/flashcards_screen.dart';
 import 'package:mobile/screens/games/word_duel_screen.dart';
 import 'package:mobile/screens/settings_screen.dart';
 import 'package:mobile/screens/profile_screen.dart';
-import 'games/word_scramble_screen.dart';  // Add this import
-import 'games/fill_blanks_screen.dart';
+import 'package:mobile/screens/games/word_scramble_screen.dart';
+import 'package:just_audio/just_audio.dart';
+import '../services/word_service.dart';
+import '../models/daily_word.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,7 +23,212 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
+  final WordService _wordService = WordService();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   int _currentIndex = 0;
+  DailyWord? _dailyWord;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDailyWord();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadDailyWord() async {
+    try {
+      final dailyWord = await _wordService.getDailyWord();
+      setState(() {
+        _dailyWord = dailyWord;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Handle error
+    }
+  }
+
+  Future<void> _playAudio(String url) async {
+    try {
+      await _audioPlayer.setUrl(url);
+      await _audioPlayer.play();
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  // Replace the existing daily word card with this one
+  Widget _buildDailyWordCard() {
+    if (_isLoading) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue[600]!, Colors.blue[400]!],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+
+    if (_dailyWord == null) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue[600]!, Colors.blue[400]!],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: Text(
+            'Failed to load daily word',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => _navigateToWordDetails(context, _dailyWord!.word),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue[600]!, Colors.blue[400]!],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Word of the Day',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'NEW',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _dailyWord!.word,
+                        style: TextStyle(  // Remove const
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _dailyWord!.data.phonetic,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _dailyWord!.data.meanings.first.definitions.first.definition,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Flexible(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildActionButton(
+                          icon: Icons.volume_up,
+                          label: 'Listen',
+                          onTap: () => _playAudio(_dailyWord!.data.audioUrl),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildActionButton(
+                          icon: Icons.favorite_border,
+                          label: 'Like',
+                          onTap: () {},
+                        ),
+                        const SizedBox(width: 12),
+                        _buildActionButton(
+                          icon: Icons.bookmark_border,
+                          label: 'Save',
+                          onTap: () {},
+                        ),
+                        const SizedBox(width: 12),
+                        _buildActionButton(
+                          icon: Icons.share,
+                          label: 'Share',
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _signOut(BuildContext context) async {
     try {
@@ -38,12 +245,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   @override
@@ -113,120 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Daily Word Card
-                  GestureDetector(
-                    onTap: () => _navigateToWordDetails(context, 'Serendipity'),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.blue[600]!, Colors.blue[400]!],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Word of the Day',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  'NEW',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Serendipity',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '/ˌserənˈdipədē/',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'The occurrence and development of events by chance in a happy or beneficial way.',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Flexible(
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: [
-                                      _buildActionButton(
-                                        icon: Icons.volume_up,
-                                        label: 'Listen',
-                                        onTap: () {},
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _buildActionButton(
-                                        icon: Icons.favorite_border,
-                                        label: 'Like',
-                                        onTap: () {},
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _buildActionButton(
-                                        icon: Icons.bookmark_border,
-                                        label: 'Save',
-                                        onTap: () {},
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _buildActionButton(
-                                        icon: Icons.share,
-                                        label: 'Share',
-                                        onTap: () {},
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildDailyWordCard(),  // This will show the API-driven word card
                   const SizedBox(height: 24),
                   // Recently Viewed Section
                   const Text(
@@ -472,30 +560,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Add navigation to word details with animation
-  void _navigateToWordDetails(BuildContext context, String word) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => WordDetailsScreen(
-          word: word,
+  void _navigateToWordDetails(BuildContext context, dynamic wordData) {
+      String word = wordData is DailyWord ? wordData.word : wordData as String;
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => WordDetailsScreen(
+            word: word,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(0.0, 1.0);
+            const end = Offset.zero;
+            const curve = Curves.easeInOutCubic;
+            var tween = Tween(begin: begin, end: end).chain(
+              CurveTween(curve: curve),
+            );
+            var offsetAnimation = animation.drive(tween);
+            return SlideTransition(
+              position: offsetAnimation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 500),
         ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(0.0, 1.0);
-          const end = Offset.zero;
-          const curve = Curves.easeInOutCubic;
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-          var offsetAnimation = animation.drive(tween);
-          return SlideTransition(
-            position: offsetAnimation,
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
-    );
-  }
+      );
+    }
 
   // Add navigation to recently viewed word
   Widget _buildRecentWordCard(String word, String definition) {

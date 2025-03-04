@@ -384,4 +384,4 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> with SingleTicker
       ),
     );
   }
-} 
+}
