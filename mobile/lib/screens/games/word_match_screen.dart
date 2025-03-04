@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/word_match_provider.dart';  // Updated import path
 import 'base_game_screen.dart';
 
 class WordMatchScreen extends BaseGameScreen {
@@ -14,89 +16,250 @@ class WordMatchScreen extends BaseGameScreen {
 
 class _WordMatchScreenState extends BaseGameScreenState<WordMatchScreen> {
   String _selectedDifficulty = 'Easy';
-  int _score = 0;
-  int _highScore = 0;
 
   @override
   Widget buildGameHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Match words with their meanings',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Consumer<WordMatchProvider>(
+      builder: (context, provider, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'High Score',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  _highScore.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
+            const Text(
+              'Match words with their meanings',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
               ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.star,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _score.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Score',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      provider.score.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                if (provider.isPlaying)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.timer,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          provider.timeLeft.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
   @override
   Widget buildGameContent() {
+    return Consumer<WordMatchProvider>(
+      builder: (context, provider, child) {
+        if (provider.isGameOver) {
+          return _buildGameOverScreen(provider);
+        }
+        if (!provider.isPlaying) {
+          return _buildStartGame();
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Words',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Expanded(child: _buildWordList(provider)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Definitions',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Expanded(child: _buildDefinitionList(provider)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGameOverScreen(WordMatchProvider provider) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.timer_off,
+              size: 64,
+              color: Colors.orange,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Game Over!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Final Score: ${provider.finalScore}',
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    provider.resetGame();
+                  },
+                  icon: const Icon(Icons.replay),
+                  label: const Text('Play Again'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.exit_to_app),
+                  label: const Text('Exit'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  // Remove this duplicate implementation of _buildWordCard
+  // Delete this entire block
+  // Widget _buildWordCard(...) { ... }
+  Widget _buildStartGame() {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Difficulty Selection
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Select Difficulty',
@@ -120,17 +283,12 @@ class _WordMatchScreenState extends BaseGameScreenState<WordMatchScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          // Start Game Button
           ElevatedButton(
             onPressed: () {
-              // TODO: Implement game start
-              setState(() {
-                _score = 0;
-              });
+              context.read<WordMatchProvider>().startGame(_selectedDifficulty);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: widget.color,
-              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -145,41 +303,93 @@ class _WordMatchScreenState extends BaseGameScreenState<WordMatchScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          // Instructions
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'How to Play',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    '1. Select a difficulty level\n'
-                    '2. Match each word with its correct definition\n'
-                    '3. Score points for correct matches\n'
-                    '4. Complete the game before time runs out',
-                    style: TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
+  Widget _buildWordList(WordMatchProvider provider) {
+    return Card(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: provider.wordPairs.length,
+        itemBuilder: (context, index) {
+          final pair = provider.wordPairs[index];
+          return _buildWordCard(
+            pair['word']!,
+            pair['isMatched'] == 'true',
+            provider.selectedWord == pair['word'],
+            () => provider.selectWord(pair['word']!),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDefinitionList(WordMatchProvider provider) {
+    return Card(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: provider.shuffledDefinitions.length,
+        itemBuilder: (context, index) {
+          final definition = provider.shuffledDefinitions[index];
+          final isMatched = provider.wordPairs
+              .any((pair) => pair['definition'] == definition && pair['isMatched'] == 'true');
+          return _buildWordCard(
+            definition,
+            isMatched,
+            provider.selectedDefinition == definition,
+            () => provider.selectDefinition(definition),
+          );
+        },
+      ),
+    );
+  }
+  // Keep only this implementation of _buildWordCard
+  Widget _buildWordCard(
+    String text,
+    bool isMatched,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Card(
+        elevation: isSelected ? 4 : 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: isMatched
+                ? Colors.green.withOpacity(0.5)
+                : isSelected
+                    ? widget.color.withOpacity(0.5)
+                    : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          title: Text(
+            text,
+            style: TextStyle(
+              decoration: isMatched ? TextDecoration.lineThrough : null,
+              color: isMatched ? Colors.green : null,
+              fontSize: 16,
+            ),
+          ),
+          onTap: isMatched ? null : onTap,
+          tileColor: isMatched
+              ? Colors.green.withOpacity(0.1)
+              : isSelected
+                  ? widget.color.withOpacity(0.1)
+                  : null,
+        ),
+      ),
+    );
+  }
   Widget _buildDifficultyButton(String difficulty) {
     final isSelected = _selectedDifficulty == difficulty;
     return Expanded(
@@ -201,4 +411,4 @@ class _WordMatchScreenState extends BaseGameScreenState<WordMatchScreen> {
       ),
     );
   }
-} 
+}

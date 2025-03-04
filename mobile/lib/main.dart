@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/services/auth_service.dart';
 import 'package:mobile/blocs/auth_bloc.dart';
+import 'providers/word_match_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
+        ChangeNotifierProvider(create: (_) => WordMatchProvider()),
+        ChangeNotifierProvider(create: (_) => WordMatchProvider()),
       ],
       child: MaterialApp(
         title: 'WordWise',
