@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => WordScrambleProvider(
             context.read<VocabularyService>(),
+            context,  // Add the BuildContext parameter
           ),
         ),
       ],
