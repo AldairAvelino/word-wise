@@ -16,8 +16,20 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
   Future<void> _playAudio(String? url) async {
     if (url == null || url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No audio available for this word'),
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.volume_off, color: Colors.white),
+              const SizedBox(width: 12),
+              const Text('Audio pronunciation not available'),
+            ],
+          ),
+          backgroundColor: Colors.blue[600],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
@@ -28,8 +40,20 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
       await _audioPlayer.play();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to play audio'),
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              const Text('Failed to play audio pronunciation'),
+            ],
+          ),
+          backgroundColor: Colors.red[400],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -82,13 +106,23 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.dailyWord.word,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.dailyWord.word,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.volume_up, color: Colors.white, size: 28),
+                        onPressed: () => _playAudio(widget.dailyWord.data.audioUrl),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -97,19 +131,19 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
                         Text(
                           widget.dailyWord.data.phonetic!,
                           style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 18,
+                            color: Colors.white70,                            fontSize: 18,
                           ),
                         ),
                         const SizedBox(width: 8),
                       ],
-                      if (widget.dailyWord.data.audioUrl.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.volume_up, color: Colors.white),
-                          onPressed: () => _playAudio(widget.dailyWord.data.audioUrl),
-                        ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  if (widget.dailyWord.data.audioUrl.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.volume_up, color: Colors.white),
+                      onPressed: () => _playAudio(widget.dailyWord.data.audioUrl),
+                    ),
                 ],
               ),
             ),

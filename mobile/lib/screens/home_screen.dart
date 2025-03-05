@@ -306,16 +306,40 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blue[600]!, Colors.blue[400]!],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: Colors.blue[400],
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Word of the Day',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'NEW',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Text(
               _dailyWord!.word,
               style: const TextStyle(
@@ -345,24 +369,33 @@ class _HomeScreenState extends State<HomeScreen> {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildActionButton(
                   icon: Icons.volume_up,
                   label: 'Listen',
-                  onTap: _dailyWord!.data.audioUrl.isEmpty ? null : () => _playAudio(_dailyWord!.data.audioUrl),
+                  onTap: _dailyWord!.data.audioUrl.isEmpty 
+                    ? null 
+                    : () => _playAudio(_dailyWord!.data.audioUrl),
                   isEnabled: _dailyWord!.data.audioUrl.isNotEmpty,
                 ),
+                const SizedBox(width: 12),
                 _buildActionButton(
                   icon: Icons.favorite_border,
                   label: 'Like',
                   onTap: () {},
                 ),
+                const SizedBox(width: 12),
                 _buildActionButton(
                   icon: Icons.bookmark_border,
                   label: 'Save',
+                  onTap: () {},
+                ),
+                const SizedBox(width: 12),
+                _buildActionButton(
+                  icon: Icons.share,
+                  label: 'Share',
                   onTap: () {},
                 ),
               ],
@@ -372,31 +405,60 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-// Remove the duplicate _buildActionButton method and keep this version
+  
   Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback? onTap,
-    bool isEnabled = true,
+  required IconData icon,
+  required String label,
+  required VoidCallback? onTap,
+  bool isEnabled = true,
   }) {
-    return Opacity(
-      opacity: isEnabled ? 1.0 : 0.5,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          children: [
-            Icon(icon, color: Colors.white),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
+  return Expanded(
+  child: Material(
+  color: Colors.white24,
+  borderRadius: BorderRadius.circular(8),
+  child: InkWell(
+  onTap: isEnabled ? onTap : () {
+  if (label == 'Listen') {
+  ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+  content: Row(
+  children: [
+  const Icon(Icons.volume_off, color: Colors.white),
+  const SizedBox(width: 12),
+  const Text('Audio pronunciation not available'),
+  ],
+  ),
+  backgroundColor: Colors.blue[600],
+  behavior: SnackBarBehavior.floating,
+  shape: RoundedRectangleBorder(
+  borderRadius: BorderRadius.circular(10),
+  ),
+  duration: const Duration(seconds: 2),
+  ),
+  );
   }
-
+  },
+  borderRadius: BorderRadius.circular(8),
+  child: Container(
+  padding: const EdgeInsets.symmetric(vertical: 8),
+  child: Column(
+  children: [
+  Icon(icon, color: Colors.white, size: 24),  // Increased from 20 to 24
+  const SizedBox(height: 4),
+  Text(
+  label,
+  style: const TextStyle(
+  color: Colors.white,
+  fontSize: 12,
+  ),
+  ),
+  ],
+  ),
+  ),
+  ),
+  ),
+  );
+  }
   // Fix the _navigateToWordDetails method signature and call
   void _navigateToWordDetails(DailyWord wordData) {
     Navigator.push(
