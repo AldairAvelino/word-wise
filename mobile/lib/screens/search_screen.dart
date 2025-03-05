@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -9,11 +11,48 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final _searchController = TextEditingController();
+  List<String> _searchResults = [];
+  bool _isLoading = false;
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  Future<void> _searchWords(String query) async {
+    setState(() {
+      _isLoading = true;
+      _searchResults = [];
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://word-wise-16vw.onrender.com/api/words/search/$query'),
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        setState(() {
+          // Add the single word to the results
+          _searchResults = [data['word'] as String];
+        });
+      } else {
+        throw Exception('Server returned ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Search error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red[400],
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -42,7 +81,9 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             style: const TextStyle(color: Colors.black),
             onSubmitted: (value) {
-              // TODO: Implement search functionality
+              if (value.isNotEmpty) {
+                _searchWords(value);
+              }
             },
           ),
         ),
@@ -51,15 +92,37 @@ class _SearchScreenState extends State<SearchScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Placeholder for search results
-            const Expanded(
-              child: Center(
-                child: Text('Search for words to see results'),
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (_searchResults.isEmpty)
+              const Expanded(
+                child: Center(
+                  child: Text('Search for words to see results'),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _searchResults.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(_searchResults[index]),
+                      onTap: () {
+                        // TODO: Navigate to word details
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
