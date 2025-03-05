@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:mobile/providers/auth_provider.dart';
 import 'package:mobile/screens/auth/get_started_screen.dart';
 import 'package:mobile/screens/settings_screen.dart';
+import 'package:mobile/screens/help_support_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -131,7 +132,12 @@ class ProfileScreen extends StatelessWidget {
           icon: Icons.help_outline,
           title: 'Help & Support',
           subtitle: 'FAQs, contact support',
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HelpSupportScreen()),
+            );
+          },
         ),
       ],
     );
