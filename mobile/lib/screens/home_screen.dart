@@ -9,6 +9,8 @@ import 'package:mobile/screens/games/flashcards_screen.dart';
 import 'package:mobile/screens/games/word_duel_screen.dart';
 import 'package:mobile/screens/settings_screen.dart';
 import 'package:mobile/screens/profile_screen.dart';
+import 'package:mobile/screens/search_screen.dart';
+import 'package:mobile/screens/saved_words_screen.dart';
 import 'package:mobile/screens/games/word_scramble_screen.dart';
 import 'package:just_audio/just_audio.dart';
 import '../services/word_service.dart';
@@ -244,26 +246,57 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
           });
+          
+          switch (index) {
+            case 0: // Home
+              // Already on home screen
+              break;
+            case 1: // Search
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchScreen()),
+              );
+              break;
+            case 2: // Saved
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SavedWordsScreen()),
+              );
+              break;
+            case 3: // Profile
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+              break;
+          }
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
+            icon: Icon(Icons.search_outlined),
+            activeIcon: Icon(Icons.search),
             label: 'Search',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark),
+            icon: Icon(Icons.bookmark_border_outlined),
+            activeIcon: Icon(Icons.bookmark),
             label: 'Saved',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],

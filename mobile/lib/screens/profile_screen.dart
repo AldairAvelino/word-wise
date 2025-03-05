@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/auth_provider.dart';
 import 'package:mobile/screens/auth/get_started_screen.dart';
+import 'package:mobile/screens/settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -47,147 +48,121 @@ class ProfileScreen extends StatelessWidget {
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 0),  // Removed spacing completely
+              const CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.person, size: 50, color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'John Doe',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Joined March 2024',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildStatsCard(),
+                    const SizedBox(height: 20),
+                    _buildMenuSection(context),  // Pass context here
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  Widget _buildMenuSection(BuildContext context) {  // Accept context parameter
+    return Column(
+      children: [
+        _buildMenuItem(
+          icon: Icons.settings,
+          title: 'Settings',
+          subtitle: 'App preferences, notifications',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+            );
+          },
+        ),
+        _buildMenuItem(
+          icon: Icons.bar_chart,
+          title: 'Progress',
+          subtitle: 'View learning statistics',
+          onTap: () {},
+        ),
+        _buildMenuItem(
+          icon: Icons.emoji_events,
+          title: 'Achievements',
+          subtitle: 'View your badges and rewards',
+          onTap: () {},
+        ),
+        _buildMenuItem(
+          icon: Icons.help_outline,
+          title: 'Help & Support',
+          subtitle: 'FAQs, contact support',
+          onTap: () {},
+        ),
+      ],
+    );
+  }
+  Widget _buildStatsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          // Profile Header
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-            ),
-            child: Column(
-              children: [
-                // Profile Picture and Edit Icon
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                      child: const Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit, size: 20),
-                      onPressed: () => _showEditProfileDialog(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // User Name
-                const Text(
-                  'John Doe',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Email
-                const Text(
-                  'john.doe@example.com',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Stats Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildStatItem('Words Learned', '127'),
-                    _buildStatItem('Daily Streak', '15'),
-                    _buildStatItem('Total Points', '2.5K'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Recent Activity
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Recent Activity',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildActivityItem(
-                  icon: Icons.star,
-                  title: 'Completed Word Match',
-                  subtitle: 'Score: 250 points',
-                  time: '2h ago',
-                ),
-                _buildActivityItem(
-                  icon: Icons.bookmark,
-                  title: 'Saved new word',
-                  subtitle: 'Ephemeral',
-                  time: '5h ago',
-                ),
-                _buildActivityItem(
-                  icon: Icons.emoji_events,
-                  title: 'New Achievement',
-                  subtitle: '7 Day Streak!',
-                  time: '1d ago',
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Sign Out Button
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: ElevatedButton(
-              onPressed: () => _signOut(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red[100],
-                foregroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.logout),
-                  SizedBox(width: 8),
-                  Text(
-                    'Sign Out',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _buildStatItem('Words\nLearned', '127'),
+          _buildDivider(),
+          _buildStatItem('Daily\nStreak', '15'),
+          _buildDivider(),
+          _buildStatItem('Total\nPoints', '2.5K'),
         ],
       ),
     );
   }
-
   Widget _buildStatItem(String label, String value) {
     return Column(
       children: [
@@ -196,48 +171,65 @@ class ProfileScreen extends StatelessWidget {
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
+            color: Colors.blue,
           ),
         ),
+        const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
           ),
         ),
       ],
     );
   }
-
-  Widget _buildActivityItem({
+  Widget _buildDivider() {
+    return Container(
+      height: 40,
+      width: 1,
+      color: Colors.grey[300],
+    );
+  }
+  Widget _buildMenuItem({
     required IconData icon,
     required String title,
     required String subtitle,
-    required String time,
+    required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 0,
-      child: ListTile(
-        leading: CircleAvatar(
-          child: Icon(icon),
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
         ),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: Text(
-          time,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
-          ),
+        child: Icon(icon, color: Colors.blue),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
         ),
       ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
     );
   }
 }
 
 class EditProfileForm extends StatelessWidget {
   const EditProfileForm({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -254,4 +246,4 @@ class EditProfileForm extends StatelessWidget {
       ],
     );
   }
-} 
+}
