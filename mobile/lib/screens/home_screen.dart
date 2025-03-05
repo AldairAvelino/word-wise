@@ -123,15 +123,60 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadDailyWord() async {
     try {
       final dailyWord = await _wordService.getDailyWord();
-      setState(() {
-        _dailyWord = dailyWord;
-        _isLoading = false;
-      });
+      
+      // Get the auth token
+      final authBloc = context.read<AuthBloc>();
+      final authState = authBloc.state;
+      
+      if (authState is AuthAuthenticated) {
+        // Get saved words
+        final response = await http.get(
+          Uri.parse('https://word-wise-16vw.onrender.com/api/words/saved'),
+          headers: {
+            'Authorization': 'Bearer ${authState.token}',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final List<dynamic> savedWords = json.decode(response.body);
+          // Check if current word is in saved words
+          final savedWord = savedWords.firstWhere(
+            (word) => word['word'] == dailyWord.word,
+            orElse: () => null,
+          );
+
+          setState(() {
+            _dailyWord = dailyWord;
+            _isLoading = false;
+            _isSaved = savedWord != null;
+            if (savedWord != null) {
+              _savedWordId = savedWord['id'];
+            }
+          });
+        } else {
+          setState(() {
+            _dailyWord = dailyWord;
+            _isLoading = false;
+            _isSaved = false;
+          });
+        }
+      } else {
+        setState(() {
+          _dailyWord = dailyWord;
+          _isLoading = false;
+          _isSaved = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load daily word: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
   // Fix the typo in _playAudio method
