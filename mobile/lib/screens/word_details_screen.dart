@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/daily_word.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/auth_bloc.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class WordDetailsScreen extends StatefulWidget {
   final DailyWord dailyWord;
@@ -11,8 +15,257 @@ class WordDetailsScreen extends StatefulWidget {
 
 class _WordDetailsScreenState extends State<WordDetailsScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  bool _isMastered = false;  // Add this line
-  
+  bool _isMastered = false;
+  bool _isLiked = false;
+  bool _isSaved = false;
+  String? _savedWordId;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSavedStatus();
+  }
+  Future<void> _checkSavedStatus() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+
+    if (authState is AuthAuthenticated) {
+      try {
+        final response = await http.get(
+          Uri.parse('https://word-wise-16vw.onrender.com/api/words/saved'),
+          headers: {
+            'Authorization': 'Bearer ${authState.token}',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final List<dynamic> savedWords = json.decode(response.body);
+          final savedWord = savedWords.firstWhere(
+            (word) => word['word'] == widget.dailyWord.word,
+            orElse: () => null,
+          );
+
+          if (mounted) {
+            setState(() {
+              _isSaved = savedWord != null;
+              _isLiked = savedWord?['is_liked'] ?? false;
+              if (savedWord != null) {
+                _savedWordId = savedWord['id'];
+              }
+            });
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error checking saved status: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+  // Add the bottom navigation bar actions
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+    bool isEnabled = true,
+    bool fillIcon = false,
+  }) {
+    return Expanded(
+      child: Material(
+        color: fillIcon ? Colors.white : Colors.white24,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: isEnabled ? onTap : null,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              children: [
+                Icon(
+                  icon,
+                  color: fillIcon ? Colors.blue[400] : Colors.white,
+                  size: 24
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: fillIcon ? Colors.blue[400] : Colors.white,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  Future<void> _handleSaveWord() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+
+    if (authState is! AuthAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to save words'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    try {
+      if (!_isSaved) {
+        final response = await http.post(
+          Uri.parse('https://word-wise-16vw.onrender.com/api/words/save'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${authState.token}',
+          },
+          body: jsonEncode({
+            'word': widget.dailyWord.word,
+          }),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final responseData = json.decode(response.body);
+          final wordId = responseData['word']['id'];
+          setState(() {
+            _isSaved = true;
+            _savedWordId = wordId;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Word saved successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          final errorData = json.decode(response.body);
+          throw Exception(errorData['message'] ?? 'Failed to save word');
+        }
+      } else {
+        final response = await http.delete(
+          Uri.parse(
+              'https://word-wise-16vw.onrender.com/api/words/$_savedWordId'),
+          headers: {
+            'Authorization': 'Bearer ${authState.token}',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          setState(() {
+            _isSaved = false;
+            _savedWordId = null;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Word removed from saved list'),
+              backgroundColor: Colors.blue,
+            ),
+          );
+        } else {
+          final errorData = json.decode(response.body);
+          throw Exception(errorData['message'] ?? 'Failed to remove word');
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  Future<void> _handleLikeWord() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+    
+    if (authState is! AuthAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to like words'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    try {
+      // First, get the list of saved words
+      final savedResponse = await http.get(
+        Uri.parse('https://word-wise-16vw.onrender.com/api/words/saved'),
+        headers: {
+          'Authorization': 'Bearer ${authState.token}',
+        },
+      );
+
+      if (savedResponse.statusCode == 200) {
+        final List<dynamic> savedWords = json.decode(savedResponse.body);
+        final savedWord = savedWords.firstWhere(
+          (word) => word['word'] == widget.dailyWord.word,
+          orElse: () => null,
+        );
+
+        if (savedWord != null) {
+          // Word is saved, update like status
+          final wordId = savedWord['id'];
+          final response = await http.put(
+            Uri.parse('https://word-wise-16vw.onrender.com/api/words/$wordId/like'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ${authState.token}',
+            },
+            body: jsonEncode({
+              'is_liked': !_isLiked,
+            }),
+          );
+
+          if (response.statusCode == 200) {
+            setState(() {
+              _isLiked = !_isLiked;
+              _savedWordId = wordId; // Store the word ID
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(_isLiked ? 'Word liked!' : 'Word unliked'),
+                backgroundColor: _isLiked ? Colors.pink : Colors.blue,
+              ),
+            );
+          } else {
+            final errorData = json.decode(response.body);
+            throw Exception(errorData['message'] ?? 'Failed to update like status');
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please save the word first before liking it'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        throw Exception('Failed to fetch saved words');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
   Future<void> _playAudio(String? url) async {
     if (url == null || url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,16 +330,22 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.white),
-            onPressed: () {},
+            icon: Icon(
+              _isLiked ? Icons.favorite : Icons.favorite_border,
+              color: Colors.white
+            ),
+            onPressed: () => _handleLikeWord(),
           ),
           IconButton(
-            icon: const Icon(Icons.bookmark_border, color: Colors.white),
-            onPressed: () {},
+            icon: Icon(
+              _isSaved ? Icons.bookmark : Icons.bookmark_border,
+              color: Colors.white
+            ),
+            onPressed: () => _handleSaveWord(),
           ),
           IconButton(
             icon: const Icon(Icons.share, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {}, // TODO: Implement share functionality
           ),
         ],
       ),
