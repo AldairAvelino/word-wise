@@ -29,6 +29,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String? _savedWordId; // Add this line to store the word ID
   final _searchController = TextEditingController();
   final WordService _wordService = WordService();
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -438,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       if (!_isSaved) {
-        // Save word
+        // Save word functionality remains the same
         final response = await http.post(
           Uri.parse('https://word-wise-16vw.onrender.com/api/words/save'),
           headers: {
@@ -450,31 +451,53 @@ class _HomeScreenState extends State<HomeScreen> {
           }),
         );
 
-        if (response.statusCode == 200) {
-          setState(() => _isSaved = true);
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final responseData = json.decode(response.body);
+          final wordId = responseData['word']['id']; // Store the word ID
+          setState(() {
+            _isSaved = true;
+            _savedWordId = wordId; // Store the ID for later use when unsaving
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Word saved successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
         } else {
-          throw Exception('Failed to save word');
+          final errorData = json.decode(response.body);
+          throw Exception(errorData['message'] ?? 'Failed to save word');
         }
       } else {
-        // Unsave word
+        // Unsave word with the correct endpoint using the stored ID
         final response = await http.delete(
-          Uri.parse('https://word-wise-16vw.onrender.com/api/words/${_dailyWord!.id}'),
+          Uri.parse('https://word-wise-16vw.onrender.com/api/words/$_savedWordId'),
           headers: {
             'Authorization': 'Bearer ${(authState as AuthAuthenticated).token}',
           },
         );
 
         if (response.statusCode == 200) {
-          setState(() => _isSaved = false);
+          setState(() {
+            _isSaved = false;
+            _savedWordId = null; // Clear the stored ID
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Word removed from saved list'),
+              backgroundColor: Colors.blue,
+            ),
+          );
         } else {
-          throw Exception('Failed to unsave word');
+          final errorData = json.decode(response.body);
+          throw Exception(errorData['message'] ?? 'Failed to remove word');
         }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red[400],
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
         ),
       );
     }
