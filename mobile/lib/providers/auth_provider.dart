@@ -1,66 +1,67 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/auth_bloc.dart';
 
-class AuthProvider extends ChangeNotifier {
-  final _authService = AuthService();
-  Map<String, dynamic>? _user;
-  String? _token;
+class AuthProvider with ChangeNotifier {
+  final AuthBloc authBloc;
   bool _loading = true;
 
-  AuthProvider() {
-    _init();
-  }
-
-  Map<String, dynamic>? get user => _user;
-  String? get token => _token;
-  bool get loading => _loading;
-  bool get isAuthenticated => _user != null && _token != null;
-
-  Future<void> _init() async {
-    // Initialize by checking stored token and user data
-    _loading = false;
-    notifyListeners();
-  }
-
-  Future<void> signIn({required String email, required String password}) async {
-    try {
-      final response = await _authService.signIn(email, password);
-      _token = response['session']['access_token'];
-      _user = response['user'];
+  AuthProvider({required this.authBloc}) {
+    // Listen to AuthBloc state changes
+    authBloc.stream.listen((state) {
+      _loading = state is AuthLoading;
       notifyListeners();
-    } catch (e) {
-      rethrow;
-    }
+    });
+    _loading = false;
   }
+
+  bool get loading => _loading;
+  bool get isAuthenticated => authBloc.state is AuthAuthenticated;
+  String? get token => (authBloc.state is AuthAuthenticated) 
+      ? (authBloc.state as AuthAuthenticated).token 
+      : null;
+
+  // Add signUp method
   Future<Map<String, dynamic>> signUp({
-    required String email, 
+    required String email,
     required String password,
     required String username,
   }) async {
-    try {
-      final response = await _authService.signUp(email, password, username);
-      // Store only the user data from the response
-      _user = response['user'];
-      notifyListeners();
-      return response; // Return the response
-    } catch (e) {
-      rethrow;
-    }
-  }
-  Future<void> signOut() async {
-    try {
-      if (_token != null) {
-        await _authService.signOut(_token!);
+    authBloc.add(SignUpEvent(email, password, username));
+    // Wait for the state to change
+    await for (final state in authBloc.stream) {
+      if (state is AuthAuthenticated) {
+        return {'user': state.user};
       }
-      _user = null;
-      _token = null;
-      notifyListeners();
-    } catch (e) {
-      rethrow;
+      if (state is AuthError) {
+        throw Exception(state.message);
+      }
+    }
+    throw Exception('Sign up failed');
+  }
+
+  // Add signOut method
+  Future<void> signOut() async {
+    authBloc.add(SignOutEvent());
+    // Wait for the state to change
+    await for (final state in authBloc.stream) {
+      if (state is AuthInitial) {
+        return;
+      }
+      if (state is AuthError) {
+        throw Exception(state.message);
+      }
     }
   }
 
+  // Add resetPassword method
   Future<void> resetPassword(String email) async {
-    await _authService.resetPassword(email);
+    // Since we don't have a reset password event in AuthBloc,
+    // we'll need to implement it or use the AuthService directly
+    try {
+      await authBloc.authService.resetPassword(email);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
   }
 }

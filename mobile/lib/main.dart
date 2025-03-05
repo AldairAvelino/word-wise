@@ -14,54 +14,72 @@ import 'providers/flashcard_provider.dart';
 import 'providers/word_scramble_provider.dart';  // Add this import
 import 'providers/fill_blanks_provider.dart';  // Add this import
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  
+  runApp(MyApp(sharedPreferences: prefs));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SharedPreferences sharedPreferences;
+  const MyApp({super.key, required this.sharedPreferences});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
+    return MultiBlocProvider(
       providers: [
-        Provider(
-          create: (context) => VocabularyService(),
-        ),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => OnboardingProvider()),
-        ChangeNotifierProvider(create: (_) => WordMatchProvider()),
-        ChangeNotifierProvider(
-          create: (context) => WordScrambleProvider(
-            context.read<VocabularyService>(),
-            context,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => FillBlanksProvider(
-            context.read<VocabularyService>(),
-            context,
+        BlocProvider<AuthBloc>(
+          create: (context) => AuthBloc(
+            AuthService(),
+            sharedPreferences,
           ),
         ),
       ],
-      child: MaterialApp(
-        title: 'WordWise',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          scaffoldBackgroundColor: Colors.white,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            iconTheme: IconThemeData(color: Colors.black),
-            titleTextStyle: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+      child: MultiProvider(
+        providers: [
+          Provider(
+            create: (context) => VocabularyService(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => AuthProvider(
+              authBloc: context.read<AuthBloc>(),
             ),
           ),
+          ChangeNotifierProvider(create: (_) => OnboardingProvider()),
+          ChangeNotifierProvider(create: (_) => WordMatchProvider()),
+          ChangeNotifierProvider(
+            create: (context) => WordScrambleProvider(
+              context.read<VocabularyService>(),
+              context,
+            ),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => FillBlanksProvider(
+              context.read<VocabularyService>(),
+              context,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          title: 'WordWise',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            scaffoldBackgroundColor: Colors.white,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              iconTheme: IconThemeData(color: Colors.black),
+              titleTextStyle: TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          home: const InitialScreen(),
         ),
-        home: const InitialScreen(),
       ),
     );
   }

@@ -17,10 +17,10 @@ class AuthService {
     
     final responseData = json.decode(response.body);
     
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return {
-        'message': responseData['message'], // Include success message
-        'user': responseData['user']
+        'message': responseData['message'],
+        'user': responseData['user'],
       };
     } else {
       throw Exception(responseData['error'] ?? responseData['message'] ?? 'Failed to create account');
@@ -37,13 +37,17 @@ class AuthService {
       }),
     );
 
+    final responseData = json.decode(response.body);
+    
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      return {
+        'token': responseData['session']['access_token'],
+        'user': responseData['user'],
+      };
     } else {
-      throw Exception(json.decode(response.body)['error']);
+      throw Exception(responseData['error'] ?? 'Failed to sign in');
     }
   }
-
   Future<void> signOut(String token) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/logout'),

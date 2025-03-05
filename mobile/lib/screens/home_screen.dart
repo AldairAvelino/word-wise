@@ -15,6 +15,11 @@ import 'package:mobile/screens/games/word_scramble_screen.dart';
 import 'package:just_audio/just_audio.dart';
 import '../services/word_service.dart';
 import '../models/daily_word.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/auth_bloc.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -397,9 +402,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 12),
                 _buildActionButton(
-                  icon: Icons.bookmark_border,
-                  label: 'Save',
-                  onTap: () {},
+                  icon: _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  label: _isSaved ? 'Unsave' : 'Save',
+                  onTap: () => _handleSaveWord(),
+                  fillIcon: _isSaved,
                 ),
                 const SizedBox(width: 12),
                 _buildActionButton(
@@ -414,50 +420,92 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+  // First, add this state variable at the top of _HomeScreenState class
+  bool _isSaved = false;
   
+  // Add this method to handle save/unsave functionality
+  Future<void> _handleSaveWord() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+    
+    if (authState is! AuthAuthenticated) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const GetStartedScreen()),
+      );
+      return;
+    }
+
+    try {
+      if (!_isSaved) {
+        // Save word
+        final response = await http.post(
+          Uri.parse('https://word-wise-16vw.onrender.com/api/words/save'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${(authState as AuthAuthenticated).token}',
+          },
+          body: jsonEncode({
+            'word': _dailyWord!.word,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          setState(() => _isSaved = true);
+        } else {
+          throw Exception('Failed to save word');
+        }
+      } else {
+        // Unsave word
+        final response = await http.delete(
+          Uri.parse('https://word-wise-16vw.onrender.com/api/words/${_dailyWord!.id}'),
+          headers: {
+            'Authorization': 'Bearer ${(authState as AuthAuthenticated).token}',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          setState(() => _isSaved = false);
+        } else {
+          throw Exception('Failed to unsave word');
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red[400],
+        ),
+      );
+    }
+  }
   Widget _buildActionButton({
   required IconData icon,
   required String label,
   required VoidCallback? onTap,
   bool isEnabled = true,
-  }) {
+  bool fillIcon = false,
+}) {
   return Expanded(
   child: Material(
-  color: Colors.white24,
+  color: fillIcon ? Colors.white : Colors.white24,
   borderRadius: BorderRadius.circular(8),
   child: InkWell(
-  onTap: isEnabled ? onTap : () {
-  if (label == 'Listen') {
-  ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-  content: Row(
-  children: [
-  const Icon(Icons.volume_off, color: Colors.white),
-  const SizedBox(width: 12),
-  const Text('Audio pronunciation not available'),
-  ],
-  ),
-  backgroundColor: Colors.blue[600],
-  behavior: SnackBarBehavior.floating,
-  shape: RoundedRectangleBorder(
-  borderRadius: BorderRadius.circular(10),
-  ),
-  duration: const Duration(seconds: 2),
-  ),
-  );
-  }
-  },
+  onTap: isEnabled ? onTap : null,
   borderRadius: BorderRadius.circular(8),
   child: Container(
   padding: const EdgeInsets.symmetric(vertical: 8),
   child: Column(
   children: [
-  Icon(icon, color: Colors.white, size: 24),  // Increased from 20 to 24
+  Icon(icon, 
+  color: fillIcon ? Colors.blue[400] : Colors.white, 
+  size: 24
+  ),
   const SizedBox(height: 4),
   Text(
   label,
-  style: const TextStyle(
-  color: Colors.white,
+  style: TextStyle(
+  color: fillIcon ? Colors.blue[400] : Colors.white,
   fontSize: 12,
   ),
   ),
