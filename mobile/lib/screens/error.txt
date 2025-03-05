@@ -1,0 +1,109 @@
+lib/screens/search_screen.dart:67:10: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+    child: ListView.builder(
+         ^
+lib/screens/search_screen.dart:90:4: Error: Expected '{' before this.
+  ),
+   ^
+lib/screens/search_screen.dart:90:4: Error: Expected a class member, but got ','.
+  ),
+   ^
+lib/screens/search_screen.dart:68:18: Error: Undefined name '_searchResults'.
+      itemCount: _searchResults.length,
+                 ^^^^^^^^^^^^^^
+lib/screens/search_screen.dart:71:38: Error: Not a constant expression.
+          title: Text(_searchResults[index]),
+                                     ^^^^^
+lib/screens/search_screen.dart:71:23: Error: Undefined name '_searchResults'.
+          title: Text(_searchResults[index]),
+                      ^^^^^^^^^^^^^^
+lib/screens/search_screen.dart:71:18: Error: Constant expression expected.
+Try inserting 'const'.
+          title: Text(_searchResults[index]),
+                 ^^^^
+lib/screens/search_screen.dart:73:17: Error: Undefined name '_wordData'.
+            if (_wordData != null) {
+                ^^^^^^^^^
+lib/screens/search_screen.dart:79:38: Error: Constant expression expected.
+Try inserting 'const'.
+                      date: DateTime.now(),
+                                     ^^^
+lib/screens/search_screen.dart:79:38: Error: Cannot invoke a non-'const' constructor where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+                      date: DateTime.now(),
+                                     ^^^
+lib/screens/search_screen.dart:80:29: Error: Undefined name '_wordData'.
+                      data: _wordData!,
+                            ^^^^^^^^^
+lib/screens/search_screen.dart:78:41: Error: Required named parameter 'id' must be provided.
+                    dailyWord: DailyWord(
+                                        ^
+lib/models/daily_word.dart:8:3: Context: Found this candidate, but the arguments don't match.
+  DailyWord({
+  ^^^^^^^^^
+lib/screens/search_screen.dart:77:41: Error: Constant expression expected.
+Try inserting 'const'.
+                  builder: (context) => WordDetailsScreen(
+                                        ^^^^^^^^^^^^^^^^^
+lib/screens/search_screen.dart:77:28: Error: Not a constant expression.
+                  builder: (context) => WordDetailsScreen(
+                           ^^^^^^^^^
+lib/screens/search_screen.dart:76:17: Error: Constant expression expected.
+Try inserting 'const'.
+                MaterialPageRoute(
+                ^^^^^^^^^^^^^^^^^
+lib/screens/search_screen.dart:76:17: Error: Cannot invoke a non-'const' constructor where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+                MaterialPageRoute(
+                ^^^^^^^^^^^^^^^^^
+lib/screens/search_screen.dart:75:17: Error: Not a constant expression.
+                context,
+                ^^^^^^^
+lib/screens/search_screen.dart:74:25: Error: Method invocation is not a constant expression.
+              Navigator.push(
+                        ^^^^
+lib/screens/search_screen.dart:72:18: Error: Not a constant expression.
+          onTap: () {
+                 ^^
+lib/screens/search_screen.dart:70:16: Error: Constant expression expected.
+Try inserting 'const'.
+        return ListTile(
+               ^^^^^^^^
+lib/screens/search_screen.dart:69:20: Error: Not a constant expression.
+      itemBuilder: (context, index) {
+                   ^^^^^^^^^^^^^^^^
+lib/screens/search_screen.dart:67:21: Error: Constant expression expected.
+Try inserting 'const'.
+    child: ListView.builder(
+                    ^^^^^^^
+lib/screens/search_screen.dart:67:21: Error: Cannot invoke a non-'const' constructor where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+    child: ListView.builder(
+                    ^^^^^^^
+lib/screens/search_screen.dart:68:18: Error: Not a constant expression.
+      itemCount: _searchResults.length,
+                 ^^^^^^^^^^^^^^
+lib/screens/search_screen.dart:71:23: Error: Not a constant expression.
+          title: Text(_searchResults[index]),
+                      ^^^^^^^^^^^^^^
+lib/screens/search_screen.dart:73:17: Error: Not a constant expression.
+            if (_wordData != null) {
+                ^^^^^^^^^
+lib/screens/search_screen.dart:80:29: Error: Not a constant expression.
+                      data: _wordData!,
+                            ^^^^^^^^^
+lib/screens/search_screen.dart:132:21: Error: Not a constant expression.
+              const Expanded(
+                    ^^^^^^^^
+lib/screens/search_screen.dart:132:21: Error: Couldn't find constructor 'Expanded'.
+              const Expanded(
+                    ^^^^^^^^
+lib/screens/search_screen.dart:150:53: Error: Required named parameter 'id' must be provided.
+                                dailyWord: DailyWord(
+                                                    ^
+lib/models/daily_word.dart:8:3: Context: Found this candidate, but the arguments don't match.
+  DailyWord({
+  ^^^^^^^^^
+lib/screens/search_screen.dart:138:23: Error: Too few positional arguments: 1 required, 0 given.
+              Expanded(
+                      ^

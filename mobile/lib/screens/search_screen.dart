@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../models/word_model.dart';
+import '../models/daily_word.dart';
+import '../models/meaning.dart';
+import 'word_details_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -13,6 +17,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final _searchController = TextEditingController();
   List<String> _searchResults = [];
   bool _isLoading = false;
+  WordModel? _wordData;
 
   Future<void> _searchWords(String query) async {
     setState(() {
@@ -27,9 +32,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
+        final word = WordModel.fromJson(data);
         setState(() {
-          // Add the single word to the results
-          _searchResults = [data['word'] as String];
+          _searchResults = [word.word];
+          _wordData = word;
         });
       } else {
         throw Exception('Server returned ${response.statusCode}');
@@ -108,7 +114,77 @@ class _SearchScreenState extends State<SearchScreen> {
                     return ListTile(
                       title: Text(_searchResults[index]),
                       onTap: () {
-                        // TODO: Navigate to word details
+                        if (_wordData != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WordDetailsScreen(
+                                dailyWord: DailyWord(
+                                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                  word: _wordData!.word,
+                                  date: DateTime.now().toIso8601String(),
+                                  createdAt: DateTime.now().toIso8601String(),
+                                  data: WordData(
+                                    word: _wordData!.word,
+                                    phonetic: _wordData!.phonetic ?? '',
+                                    audioUrl: _wordData!.phonetics
+                                        .firstWhere(
+                                          (p) => p['audio'] != null && p['audio'].isNotEmpty,
+                                          orElse: () => {'audio': ''},
+                                        )['audio'] ?? '',
+                                    meanings: _wordData!.meanings.map((meaning) => 
+                                                      Meaning(
+                                                        partOfSpeech: meaning['partOfSpeech'] as String,
+                                                        definitions: (meaning['definitions'] as List<dynamic>)
+                                                            .map((def) => Definition(
+                                                                  definition: def['definition'] as String,
+                                                                  example: def['example'] as String?,
+                                                                  synonyms: (def['synonyms'] as List<dynamic>?)
+                                                                      ?.map((s) => s.toString())
+                                                                      .toList() ?? [],
+                                                                  antonyms: (def['antonyms'] as List<dynamic>?)
+                                                                      ?.map((a) => a.toString())
+                                                                      .toList() ?? [],
+                                                                ))
+                                                            .toList(),
+                                                        synonyms: (meaning['synonyms'] as List<dynamic>?)
+                                                            ?.map((s) => s.toString())
+                                                            .toList() ?? [],
+                                                        antonyms: (meaning['antonyms'] as List<dynamic>?)
+                                                            ?.map((a) => a.toString())
+                                                            .toList() ?? [],
+                                                      )
+                                                    ).toList(),
+                                    synonyms: _wordData!.meanings
+                                        .expand((meaning) => 
+                                            (meaning['definitions'] as List<dynamic>)
+                                            .expand((def) => 
+                                                (def['synonyms'] as List<dynamic>)
+                                                .map((s) => s.toString())
+                                            )
+                                        )
+                                        .toSet()
+                                        .toList(),
+                                    antonyms: _wordData!.meanings
+                                        .expand((meaning) => 
+                                            (meaning['definitions'] as List<dynamic>)
+                                            .expand((def) => 
+                                                (def['antonyms'] as List<dynamic>)
+                                                .map((a) => a.toString())
+                                            )
+                                        )
+                                        .toSet()
+                                        .toList(),
+                                    sourceUrls: _wordData!.phonetics
+                                        .where((p) => p['sourceUrl'] != null)
+                                        .map((p) => p['sourceUrl'].toString())
+                                        .toList(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                       },
                     );
                   },
