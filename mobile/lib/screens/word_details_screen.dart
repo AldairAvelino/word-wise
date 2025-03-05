@@ -49,6 +49,7 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
             setState(() {
               _isSaved = savedWord != null;
               _isLiked = savedWord?['is_liked'] ?? false;
+              _isMastered = savedWord?['is_mastered'] ?? false;
               if (savedWord != null) {
                 _savedWordId = savedWord['id'];
               }
@@ -175,6 +176,87 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
           final errorData = json.decode(response.body);
           throw Exception(errorData['message'] ?? 'Failed to remove word');
         }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  Future<void> _handleMasterWord() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+    
+    if (authState is! AuthAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to mark words as mastered'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    try {
+      // First, get the list of saved words
+      final savedResponse = await http.get(
+        Uri.parse('https://word-wise-16vw.onrender.com/api/words/saved'),
+        headers: {
+          'Authorization': 'Bearer ${authState.token}',
+        },
+      );
+
+      if (savedResponse.statusCode == 200) {
+        final List<dynamic> savedWords = json.decode(savedResponse.body);
+        final savedWord = savedWords.firstWhere(
+          (word) => word['word'] == widget.dailyWord.word,
+          orElse: () => null,
+        );
+
+        if (savedWord != null) {
+          // Word is saved, update mastered status
+          final wordId = savedWord['id'];
+          final response = await http.put(
+            Uri.parse('https://word-wise-16vw.onrender.com/api/words/$wordId/master'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ${authState.token}',
+            },
+            body: jsonEncode({
+              'is_mastered': !_isMastered,
+            }),
+          );
+
+          if (response.statusCode == 200) {
+            setState(() {
+              _isMastered = !_isMastered;
+              _savedWordId = wordId;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(_isMastered ? 'Word marked as mastered!' : 'Word unmarked as mastered'),
+                backgroundColor: _isMastered ? Colors.green : Colors.blue,
+              ),
+            );
+          } else {
+            final errorData = json.decode(response.body);
+            throw Exception(errorData['message'] ?? 'Failed to update mastered status');
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please save the word first before marking as mastered'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        throw Exception('Failed to fetch saved words');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -412,17 +494,13 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _isMastered = !_isMastered;
-                      });
-                    },
+                    onPressed: () => _handleMasterWord(),
                     icon: Icon(
                       Icons.check_circle_outline,
                       color: _isMastered ? Colors.white : Colors.grey[700],
                     ),
                     label: Text(
-                      'Mark as Mastered',
+                      _isMastered ? 'Unmark as Mastered' : 'Mark as Mastered',
                       style: TextStyle(
                         color: _isMastered ? Colors.white : Colors.grey[700],
                       ),
