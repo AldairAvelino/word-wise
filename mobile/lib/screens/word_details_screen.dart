@@ -13,12 +13,25 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isMastered = false;  // Add this line
   
-  Future<void> _playAudio(String url) async {
+  Future<void> _playAudio(String? url) async {
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No audio available for this word'),
+        ),
+      );
+      return;
+    }
+
     try {
       await _audioPlayer.setUrl(url);
       await _audioPlayer.play();
     } catch (e) {
-      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to play audio'),
+        ),
+      );
     }
   }
   
@@ -80,17 +93,21 @@ class _WordDetailsScreenState extends State<WordDetailsScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Text(
-                        widget.dailyWord.data.phonetic,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 18,
+                      if (widget.dailyWord.data.phonetic?.isNotEmpty ?? false) ...[
+                        Text(
+                          widget.dailyWord.data.phonetic!,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 18,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.volume_up, color: Colors.white),
-                        onPressed: () => _playAudio(widget.dailyWord.data.audioUrl),
-                      ),
+                        const SizedBox(width: 8),
+                      ],
+                      if (widget.dailyWord.data.audioUrl.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.volume_up, color: Colors.white),
+                          onPressed: () => _playAudio(widget.dailyWord.data.audioUrl),
+                        ),
                     ],
                   ),
                 ],

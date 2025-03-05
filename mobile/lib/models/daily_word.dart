@@ -26,82 +26,82 @@ class DailyWord {
 
 class WordData {
   final String word;
-  final List<String> antonyms;
+  final String? phonetic;
   final String audioUrl;
-  final List<Meaning> meanings;
-  final String phonetic;
   final List<String> synonyms;
+  final List<String> antonyms;
+  final List<Meaning> meanings;
   final List<String> sourceUrls;
 
   WordData({
     required this.word,
-    required this.antonyms,
+    this.phonetic,
     required this.audioUrl,
-    required this.meanings,
-    required this.phonetic,
     required this.synonyms,
+    required this.antonyms,
+    required this.meanings,
     required this.sourceUrls,
   });
 
   factory WordData.fromJson(Map<String, dynamic> json) {
     return WordData(
       word: json['word'],
-      antonyms: List<String>.from(json['antonyms']),
-      audioUrl: json['audioUrl'],
-      meanings: (json['meanings'] as List)
-          .map((meaning) => Meaning.fromJson(meaning))
-          .toList(),
       phonetic: json['phonetic'],
-      synonyms: List<String>.from(json['synonyms']),
-      sourceUrls: List<String>.from(json['sourceUrls']),
+      audioUrl: json['audioUrl'] ?? '',
+      synonyms: List<String>.from(json['synonyms'] ?? []),
+      antonyms: List<String>.from(json['antonyms'] ?? []),
+      meanings: (json['meanings'] as List?)
+          ?.map((meaning) => Meaning.fromJson(meaning))
+          .toList() ?? [],
+      sourceUrls: List<String>.from(json['sourceUrls'] ?? []),
     );
   }
 }
 
 class Meaning {
-  final List<String> antonyms;
-  final List<String> synonyms;
-  final List<Definition> definitions;
   final String partOfSpeech;
+  final List<Definition> definitions;
+  final List<String> synonyms;
+  final List<String> antonyms;
 
   Meaning({
-    required this.antonyms,
-    required this.synonyms,
-    required this.definitions,
     required this.partOfSpeech,
+    required this.definitions,
+    required this.synonyms,
+    required this.antonyms,
   });
 
   factory Meaning.fromJson(Map<String, dynamic> json) {
     return Meaning(
-      antonyms: List<String>.from(json['antonyms']),
-      synonyms: List<String>.from(json['synonyms']),
-      definitions: (json['definitions'] as List)
-          .map((definition) => Definition.fromJson(definition))
-          .toList(),
       partOfSpeech: json['partOfSpeech'],
+      definitions: (json['definitions'] as List)
+          .map((def) => Definition.fromJson(def))
+          .toList(),
+      synonyms: List<String>.from(json['synonyms'] ?? []),
+      antonyms: List<String>.from(json['antonyms'] ?? []),
     );
   }
 }
 
 class Definition {
-  final String? example;
-  final List<String> antonyms;
-  final List<String> synonyms;
   final String definition;
+  final String? example;
+  final List<String> synonyms;
+  final List<String> antonyms;
 
   Definition({
-    this.example,
-    required this.antonyms,
-    required this.synonyms,
     required this.definition,
+    this.example,
+    required this.synonyms,
+    required this.antonyms,
   });
 
   factory Definition.fromJson(Map<String, dynamic> json) {
     return Definition(
-      example: json['example'],
-      antonyms: List<String>.from(json['antonyms']),
-      synonyms: List<String>.from(json['synonyms']),
       definition: json['definition'],
+      example: json['example'],
+      synonyms: List<String>.from(json['synonyms'] ?? []),
+      antonyms: List<String>.from(json['antonyms'] ?? []),
     );
   }
 }
