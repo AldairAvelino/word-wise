@@ -20,7 +20,6 @@ import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/auth_bloc.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -30,6 +29,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? _savedWordId; // Add this line to store the word ID
+  bool _isLiked = false; // Add this state variable
+  bool _isSaved = false; // Move this up with other state variables
   final _searchController = TextEditingController();
   final WordService _wordService = WordService();
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -62,7 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
           case 'Word Scramble':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const WordScrambleScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const WordScrambleScreen()),
             );
             break;
           case 'Word Duel':
@@ -107,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
   @override
   void initState() {
     super.initState();
@@ -123,13 +126,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadDailyWord() async {
     try {
       final dailyWord = await _wordService.getDailyWord();
-      
-      // Get the auth token
+
       final authBloc = context.read<AuthBloc>();
       final authState = authBloc.state;
-      
+
       if (authState is AuthAuthenticated) {
-        // Get saved words
         final response = await http.get(
           Uri.parse('https://word-wise-16vw.onrender.com/api/words/saved'),
           headers: {
@@ -139,7 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (response.statusCode == 200) {
           final List<dynamic> savedWords = json.decode(response.body);
-          // Check if current word is in saved words
           final savedWord = savedWords.firstWhere(
             (word) => word['word'] == dailyWord.word,
             orElse: () => null,
@@ -149,6 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _dailyWord = dailyWord;
             _isLoading = false;
             _isSaved = savedWord != null;
+            _isLiked = savedWord?['is_liked'] ?? false;
             if (savedWord != null) {
               _savedWordId = savedWord['id'];
             }
@@ -158,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _dailyWord = dailyWord;
             _isLoading = false;
             _isSaved = false;
+            _isLiked = false;
           });
         }
       } else {
@@ -165,6 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _dailyWord = dailyWord;
           _isLoading = false;
           _isSaved = false;
+          _isLiked = false;
         });
       }
     } catch (e) {
@@ -179,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
+
   // Fix the typo in _playAudio method
   Future<void> _playAudio(String url) async {
     try {
@@ -190,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -215,8 +220,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildRecentWordCard('Ephemeral', 'Lasting for a very short time'),
-                      _buildRecentWordCard('Ephemeral', 'Lasting for a very short time'),
+                      _buildRecentWordCard(
+                          'Ephemeral', 'Lasting for a very short time'),
+                      _buildRecentWordCard(
+                          'Ephemeral', 'Lasting for a very short time'),
                     ],
                   ),
                 ),
@@ -280,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _currentIndex = index;
           });
-          
+
           switch (index) {
             case 0: // Home
               // Already on home screen
@@ -330,6 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
   // Replace the existing daily word card with this one
   Widget _buildDailyWordCard() {
     if (_isLoading) {
@@ -339,7 +347,8 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.blue[400],
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+        child:
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 
@@ -383,7 +392,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.blue[300],
                     borderRadius: BorderRadius.circular(12),
@@ -435,16 +445,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildActionButton(
                   icon: Icons.volume_up,
                   label: 'Listen',
-                  onTap: _dailyWord!.data.audioUrl.isEmpty 
-                    ? null 
-                    : () => _playAudio(_dailyWord!.data.audioUrl),
+                  onTap: _dailyWord!.data.audioUrl.isEmpty
+                      ? null
+                      : () => _playAudio(_dailyWord!.data.audioUrl),
                   isEnabled: _dailyWord!.data.audioUrl.isNotEmpty,
                 ),
                 const SizedBox(width: 12),
                 _buildActionButton(
-                  icon: Icons.favorite_border,
-                  label: 'Like',
-                  onTap: () {},
+                  icon: _isLiked ? Icons.favorite : Icons.favorite_border,
+                  label: _isLiked ? 'Unlike' : 'Like',
+                  onTap: () => _handleLikeWord(),
+                  fillIcon: _isLiked, // This will make the icon filled when liked
                 ),
                 const SizedBox(width: 12),
                 _buildActionButton(
@@ -466,25 +477,26 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  // First, add this state variable at the top of _HomeScreenState class
-  bool _isSaved = false;
-  
+
   // Add this method to handle save/unsave functionality
   Future<void> _handleSaveWord() async {
     final authBloc = context.read<AuthBloc>();
     final authState = authBloc.state;
-    
+
     if (authState is! AuthAuthenticated) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const GetStartedScreen()),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to save words'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
       );
       return;
     }
 
     try {
       if (!_isSaved) {
-        // Save word functionality remains the same
+        // Rest of the save word functionality remains the same
         final response = await http.post(
           Uri.parse('https://word-wise-16vw.onrender.com/api/words/save'),
           headers: {
@@ -516,7 +528,8 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         // Unsave word with the correct endpoint using the stored ID
         final response = await http.delete(
-          Uri.parse('https://word-wise-16vw.onrender.com/api/words/$_savedWordId'),
+          Uri.parse(
+              'https://word-wise-16vw.onrender.com/api/words/$_savedWordId'),
           headers: {
             'Authorization': 'Bearer ${(authState as AuthAuthenticated).token}',
           },
@@ -547,49 +560,126 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
+
+  Future<void> _handleLikeWord() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+    if (authState is! AuthAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to like words'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    try {
+      // First, get the list of saved words
+      final savedResponse = await http.get(
+        Uri.parse('https://word-wise-16vw.onrender.com/api/words/saved'),
+        headers: {
+          'Authorization': 'Bearer ${authState.token}',
+        },
+      );
+      if (savedResponse.statusCode == 200) {
+        final List<dynamic> savedWords = json.decode(savedResponse.body);
+        final savedWord = savedWords.firstWhere(
+          (word) => word['word'] == _dailyWord!.word,
+          orElse: () => null,
+        );
+        if (savedWord != null) {
+          // Word is saved, update like status
+          final wordId = savedWord['id'];
+          final response = await http.put(
+            Uri.parse('https://word-wise-16vw.onrender.com/api/words/$wordId/like'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ${authState.token}',
+            },
+            body: jsonEncode({
+              'is_liked': !_isLiked,
+            }),
+          );
+          if (response.statusCode == 200) {
+            setState(() {
+              _isLiked = !_isLiked;
+              _savedWordId = wordId; // Store the word ID
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(_isLiked ? 'Word liked!' : 'Word unliked'),
+                backgroundColor: _isLiked ? Colors.pink : Colors.blue,
+              ),
+            );
+          } else {
+            final errorData = json.decode(response.body);
+            throw Exception(errorData['message'] ?? 'Failed to update like status');
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please save the word first before liking it'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        throw Exception('Failed to fetch saved words');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
   Widget _buildActionButton({
-  required IconData icon,
-  required String label,
-  required VoidCallback? onTap,
-  bool isEnabled = true,
-  bool fillIcon = false,
-}) {
-  return Expanded(
-  child: Material(
-  color: fillIcon ? Colors.white : Colors.white24,
-  borderRadius: BorderRadius.circular(8),
-  child: InkWell(
-  onTap: isEnabled ? onTap : null,
-  borderRadius: BorderRadius.circular(8),
-  child: Container(
-  padding: const EdgeInsets.symmetric(vertical: 8),
-  child: Column(
-  children: [
-  Icon(icon, 
-  color: fillIcon ? Colors.blue[400] : Colors.white, 
-  size: 24
-  ),
-  const SizedBox(height: 4),
-  Text(
-  label,
-  style: TextStyle(
-  color: fillIcon ? Colors.blue[400] : Colors.white,
-  fontSize: 12,
-  ),
-  ),
-  ],
-  ),
-  ),
-  ),
-  ),
-  );
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+    bool isEnabled = true,
+    bool fillIcon = false,
+  }) {
+    return Expanded(
+      child: Material(
+        color: fillIcon ? Colors.white : Colors.white24,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: isEnabled ? onTap : null,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              children: [
+                Icon(icon,
+                    color: fillIcon ? Colors.blue[400] : Colors.white,
+                    size: 24),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: fillIcon ? Colors.blue[400] : Colors.white,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
   // Fix the _navigateToWordDetails method signature and call
   void _navigateToWordDetails(DailyWord wordData) {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => WordDetailsScreen(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            WordDetailsScreen(
           dailyWord: wordData,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -609,7 +699,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
   // Update the _buildRecentWordCard method
   Widget _buildRecentWordCard(String word, String definition) {
     return InkWell(
