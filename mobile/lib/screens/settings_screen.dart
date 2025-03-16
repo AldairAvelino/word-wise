@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:mobile/providers/auth_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/auth_bloc.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,19 +12,97 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationsEnabled = true;
-  bool _dailyWordNotification = true;
-  bool _practiceReminder = true;
-  bool _newFeaturesNotification = true;
-  
-  String _selectedTheme = 'System';
-  String _selectedLanguage = 'English';
-  
-  final List<String> _themes = ['System', 'Light', 'Dark'];
-  final List<String> _languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
+  bool _isLoading = true;
+  Map<String, dynamic> _settings = {
+    'notifications': true,
+    'dailyWord': true,
+    'practiceRemider': true,
+    'featuresUpdate': true,
+    'theme': 'system',
+    'language': 'en',
+    'activityStatus': true,
+    'publicProfile': true,
+  };
+
+  final Map<String, String> _languageMap = {
+    'en': 'English',
+    'pt': 'Portuguese',
+    'sp': 'Spanish',
+    'fr': 'French',
+    'gr': 'German',
+    'ch': 'Chinese',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSettings();
+  }
+
+  Future<void> _fetchSettings() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+
+    if (authState is! AuthAuthenticated) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://word-wise-16vw.onrender.com/api/user/settings'),
+        headers: {
+          'Authorization': 'Bearer ${authState.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _settings = data['settings'];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _updateSettings(String key, dynamic value) async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+
+    if (authState is! AuthAuthenticated) return;
+
+    try {
+      setState(() => _settings[key] = value);
+
+      final response = await http.put(
+        Uri.parse('https://word-wise-16vw.onrender.com/api/user/settings'),
+        headers: {
+          'Authorization': 'Bearer ${authState.token}',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'settings': _settings,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update settings');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating settings: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -32,74 +112,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Notification Settings
             _buildSectionHeader('Notification Preferences'),
             SwitchListTile(
               title: const Text('Enable Notifications'),
               subtitle: const Text('Receive app notifications'),
-              value: _notificationsEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _notificationsEnabled = value;
-                });
-              },
+              value: _settings['notifications'],
+              onChanged: (value) => _updateSettings('notifications', value),
             ),
-            if (_notificationsEnabled) ...[
+            if (_settings['notifications']) ...[
               CheckboxListTile(
                 title: const Text('Daily Word'),
                 subtitle: const Text('Get notified about the word of the day'),
-                value: _dailyWordNotification,
-                onChanged: (value) {
-                  setState(() {
-                    _dailyWordNotification = value ?? true;
-                  });
-                },
+                value: _settings['dailyWord'],
+                onChanged: (value) => _updateSettings('dailyWord', value),
               ),
               CheckboxListTile(
                 title: const Text('Practice Reminder'),
                 subtitle: const Text('Remind me to practice daily'),
-                value: _practiceReminder,
-                onChanged: (value) {
-                  setState(() {
-                    _practiceReminder = value ?? true;
-                  });
-                },
+                value: _settings['practiceRemider'],
+                onChanged: (value) => _updateSettings('practiceRemider', value),
               ),
               CheckboxListTile(
                 title: const Text('New Features'),
                 subtitle: const Text('Get updates about new features'),
-                value: _newFeaturesNotification,
-                onChanged: (value) {
-                  setState(() {
-                    _newFeaturesNotification = value ?? true;
-                  });
-                },
+                value: _settings['featuresUpdate'],
+                onChanged: (value) => _updateSettings('featuresUpdate', value),
               ),
             ],
             const Divider(),
 
-            // Theme Settings
             _buildSectionHeader('Theme'),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Select your preferred theme',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  const Text('Select your preferred theme'),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
-                    children: _themes.map((theme) {
+                    children: ['system', 'light', 'dark'].map((theme) {
                       return ChoiceChip(
-                        selected: _selectedTheme == theme,
-                        label: Text(theme),
+                        selected: _settings['theme'] == theme,
+                        label: Text(theme[0].toUpperCase() + theme.substring(1)),
                         onSelected: (selected) {
-                          setState(() {
-                            _selectedTheme = theme;
-                          });
+                          if (selected) _updateSettings('theme', theme);
                         },
                       );
                     }).toList(),
@@ -109,28 +166,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const Divider(),
 
-            // Language Settings
             _buildSectionHeader('Language Preferences'),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Select your preferred language',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  const Text('Select your preferred language'),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
-                    children: _languages.map((language) {
+                    children: _languageMap.entries.map((entry) {
                       return ChoiceChip(
-                        selected: _selectedLanguage == language,
-                        label: Text(language),
+                        selected: _settings['language'] == entry.key,
+                        label: Text(entry.value),
                         onSelected: (selected) {
-                          setState(() {
-                            _selectedLanguage = language;
-                          });
+                          if (selected) _updateSettings('language', entry.key);
                         },
                       );
                     }).toList(),
@@ -140,54 +191,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const Divider(),
 
-            // Account Settings
-            _buildSectionHeader('Account Settings'),
-            ListTile(
-              leading: const Icon(Icons.person_outline),
-              title: const Text('Edit Profile'),
-              subtitle: const Text('Update your profile information'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // TODO: Navigate to edit profile screen
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.email_outlined),
-              title: const Text('Change Email'),
-              subtitle: const Text('Update your email address'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // TODO: Navigate to change email screen
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.password_outlined),
-              title: const Text('Change Password'),
-              subtitle: const Text('Update your password'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // TODO: Navigate to change password screen
-              },
-            ),
-            const Divider(),
-
-            // Privacy Settings
             _buildSectionHeader('Privacy Settings'),
             SwitchListTile(
               title: const Text('Activity Status'),
               subtitle: const Text('Show when you\'re active'),
-              value: true,
-              onChanged: (value) {
-                // TODO: Implement activity status toggle
-              },
+              value: _settings['activityStatus'],
+              onChanged: (value) => _updateSettings('activityStatus', value),
             ),
             SwitchListTile(
               title: const Text('Public Profile'),
               subtitle: const Text('Allow others to view your profile'),
-              value: false,
-              onChanged: (value) {
-                // TODO: Implement public profile toggle
-              },
+              value: _settings['publicProfile'],
+              onChanged: (value) => _updateSettings('publicProfile', value),
             ),
             ListTile(
               leading: const Icon(Icons.security_outlined),
@@ -261,4 +276,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-} 
+}
