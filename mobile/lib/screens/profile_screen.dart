@@ -1,54 +1,111 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:mobile/providers/auth_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/auth_bloc.dart';
 import 'package:mobile/screens/auth/get_started_screen.dart';
 import 'package:mobile/screens/settings_screen.dart';
 import 'package:mobile/screens/help_support_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  void _signOut(BuildContext context) async {
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? _userData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+
+    if (authState is! AuthAuthenticated) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
     try {
-      await context.read<AuthProvider>().signOut();
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const GetStartedScreen()),
-        );
+      final response = await http.get(
+        Uri.parse('https://word-wise-16vw.onrender.com/api/auth/me'),
+        headers: {
+          'Authorization': 'Bearer ${authState.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _userData = data['user'];
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to fetch user data');
       }
     } catch (e) {
-      if (context.mounted) {
+      setState(() => _isLoading = false);
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text('Error fetching user data: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
   }
 
-  void _showEditProfileDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Profile'),
-          content: EditProfileForm(),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+  Widget _buildUnauthenticatedView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.account_circle_outlined,
+            size: 100,
+            color: Colors.grey,
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Sign in to view your profile',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            TextButton(
-              onPressed: () {
-                // TODO: Implement save functionality
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Create an account or sign in to track your progress and save your favorite words',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 16,
             ),
-          ],
-        );
-      },
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const GetStartedScreen()),
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+            child: const Text('Get Started'),
+          ),
+        ],
+      ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,44 +118,55 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 0),  // Removed spacing completely
-              const CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.blue,
-                child: Icon(Icons.person, size: 50, color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'John Doe',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Joined March 2024',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _buildStatsCard(),
-                    const SizedBox(height: 20),
-                    _buildMenuSection(context),  // Pass context here
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _userData == null
+                ? _buildUnauthenticatedView()
+                : SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        const CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.blue,
+                          child: Icon(Icons.person, size: 50, color: Colors.white),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _userData!['user_metadata']['username'] ?? 'User',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _userData!['email'] ?? '',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          'Joined ${DateTime.parse(_userData!['created_at']).toString().split(' ')[0]}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              _buildStatsCard(),
+                              const SizedBox(height: 20),
+                              _buildMenuSection(context),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
       ),
     );
   }
