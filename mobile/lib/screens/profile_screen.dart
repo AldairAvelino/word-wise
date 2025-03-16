@@ -16,12 +16,85 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _userData;
+  Map<String, dynamic>? _userStats;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
+    _fetchUserStats();
+  }
+
+  Future<void> _fetchUserStats() async {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+
+    if (authState is! AuthAuthenticated) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://word-wise-16vw.onrender.com/api/user/statistics'),
+        headers: {
+          'Authorization': 'Bearer ${authState.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _userStats = data;
+        });
+      } else {
+        throw Exception('Failed to fetch user statistics');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error fetching statistics: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildStatsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem(
+            'Words\nLearned',
+            _userStats?['totalSavedWords']?.toString() ?? '0',
+          ),
+          _buildDivider(),
+          _buildStatItem(
+            'Mastered\nWords',
+            _userStats?['masteredWords']?.toString() ?? '0',
+          ),
+          _buildDivider(),
+          _buildStatItem(
+            'Liked\nWords',
+            _userStats?['likedWords']?.toString() ?? '0',
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _fetchUserData() async {
@@ -208,33 +281,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
         ),
       ],
-    );
-  }
-  Widget _buildStatsCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem('Words\nLearned', '127'),
-          _buildDivider(),
-          _buildStatItem('Daily\nStreak', '15'),
-          _buildDivider(),
-          _buildStatItem('Total\nPoints', '2.5K'),
-        ],
-      ),
     );
   }
   Widget _buildStatItem(String label, String value) {
