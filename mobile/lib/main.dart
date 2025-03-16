@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mobile/providers/theme_provider.dart';
 import 'package:mobile/providers/auth_provider.dart';
 import 'package:mobile/providers/onboarding_provider.dart';
 import 'package:mobile/screens/splash_screen.dart';
@@ -13,6 +14,7 @@ import 'services/vocabulary_service.dart';
 import 'providers/flashcard_provider.dart';
 import 'providers/word_scramble_provider.dart';  // Add this import
 import 'providers/fill_blanks_provider.dart';  // Add this import
+import 'package:mobile/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +50,10 @@ class MyApp extends StatelessWidget {
           ),
           ChangeNotifierProvider(create: (_) => OnboardingProvider()),
           ChangeNotifierProvider(create: (_) => WordMatchProvider()),
+          // In the providers list
+          ChangeNotifierProvider(
+            create: (_) => ThemeProvider(sharedPreferences),
+          ),
           ChangeNotifierProvider(
             create: (context) => WordScrambleProvider(
               context.read<VocabularyService>(),
@@ -61,24 +67,44 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ],
-        child: MaterialApp(
-          title: 'WordWise',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-            scaffoldBackgroundColor: Colors.white,
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              iconTheme: IconThemeData(color: Colors.black),
-              titleTextStyle: TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+        child: Consumer<ThemeProvider>( // Wrap MaterialApp with Consumer
+          builder: (context, themeProvider, child) {
+            return MaterialApp(
+              title: 'WordWise',
+              debugShowCheckedModeBanner: false,
+              theme: ThemeData(
+                primarySwatch: Colors.blue,
+                scaffoldBackgroundColor: Colors.white,
+                appBarTheme: const AppBarTheme(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  iconTheme: IconThemeData(color: Colors.black),
+                  titleTextStyle: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
-          ),
-          home: const InitialScreen(),
+              darkTheme: ThemeData(
+                primarySwatch: Colors.blue,
+                brightness: Brightness.dark,
+                scaffoldBackgroundColor: Colors.grey[900],
+                appBarTheme: AppBarTheme(
+                  backgroundColor: Colors.grey[900],
+                  elevation: 0,
+                  iconTheme: const IconThemeData(color: Colors.white),
+                  titleTextStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              themeMode: themeProvider.themeMode,
+              home: const InitialScreen(),
+            );
+          },
         ),
       ),
     );

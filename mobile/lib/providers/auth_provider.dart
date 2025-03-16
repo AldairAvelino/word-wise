@@ -42,7 +42,7 @@ class AuthProvider with ChangeNotifier {
 
   // Add signOut method
   Future<void> signOut() async {
-    authBloc.add(SignOutEvent());
+    authBloc.add(SignOutEvent()); // Remove 'const' keyword
     // Wait for the state to change
     await for (final state in authBloc.stream) {
       if (state is AuthInitial) {

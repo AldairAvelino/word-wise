@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/auth_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import './../providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -72,7 +73,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (authState is! AuthAuthenticated) return;
 
     try {
-      setState(() => _settings[key] = value);
+      setState(() {
+        _settings[key] = value;
+        if (key == 'notifications' && value == false) {
+          _settings['dailyWord'] = false;
+          _settings['practiceRemider'] = false;
+          _settings['featuresUpdate'] = false;
+        }
+        // Update theme when theme setting changes
+        if (key == 'theme') {
+          context.read<ThemeProvider>().setTheme(value);
+        }
+      });
 
       final response = await http.put(
         Uri.parse('https://word-wise-16vw.onrender.com/api/user/settings'),

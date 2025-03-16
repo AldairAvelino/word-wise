@@ -2,6 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import 'dart:convert';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
+import 'package:http/http.dart' as http;
 
 // Events
 abstract class AuthEvent {}
@@ -54,6 +57,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignOutEvent>(_onSignOut);
   }
 
+  // Add this getter
+  AuthService get authService => _authService;
+
+  // Add the missing _onSignOut method
+  Future<void> _onSignOut(SignOutEvent event, Emitter<AuthState> emit) async {
+    try {
+      emit(AuthLoading());
+      final token = _prefs.getString(_tokenKey);
+      if (token != null) {
+        await _authService.signOut(token);
+      }
+      
+      // Clear stored data
+      await _prefs.remove(_tokenKey);
+      await _prefs.remove(_userKey);
+      await _prefs.remove('theme_setting'); // Also clear theme setting
+      
+      emit(AuthInitial());
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
   Future<void> _onSignUp(SignUpEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoading());
@@ -90,6 +116,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError('Invalid response from server'));
         return;
       }
+
+      // Fetch theme settings
+      try {
+        final settingsResponse = await http.get(
+          Uri.parse('https://word-wise-16vw.onrender.com/api/user/settings'),
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (settingsResponse.statusCode == 200) {
+          final settingsData = json.decode(settingsResponse.body);
+          await _prefs.setString('theme_setting', settingsData['settings']['theme']);
+        }
+      } catch (e) {
+        print('Error fetching theme settings: $e');
+      }
+
       // Store user data and token
       await _prefs.setString(_tokenKey, token);
       await _prefs.setString(_userKey, json.encode(user));
@@ -99,23 +143,5 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));
     }
   }
-  Future<void> _onSignOut(SignOutEvent event, Emitter<AuthState> emit) async {
-    try {
-      emit(AuthLoading());
-      final token = _prefs.getString(_tokenKey);
-      if (token != null) {
-        await _authService.signOut(token);
-      }
-      
-      // Clear stored data
-      await _prefs.remove(_tokenKey);
-      await _prefs.remove(_userKey);
-      
-      emit(AuthInitial());
-    } catch (e) {
-      emit(AuthError(e.toString()));
-    }
-  }
-  // Add this getter
-  AuthService get authService => _authService;
+  // Remove the _onLoginSuccess method as it's no longer needed
 }
